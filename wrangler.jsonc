@@ -1,0 +1,39 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "hono-fetch-weather",
+  "main": "src/index.ts",
+  "compatibility_date": "2025-04-24",
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
+  // "vars": {
+  //   "MY_VAR": "my-variable"
+  // },
+  "kv_namespaces": [
+    {
+      "binding": "DAILY_WEATHER_REPORT_LINKS",
+      "id": "cb50efc5337e45299df7fb73d07037ac"
+    }
+  ],
+  // "r2_buckets": [
+  //   {
+  //     "binding": "MY_BUCKET",
+  //     "bucket_name": "my-bucket"
+  //   }
+  // ],
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "d1-demo",
+      "database_id": "3a343570-36b5-4eff-9a05-38a79a285cc9",
+      "migrations_dir": "drizzle/migrations"
+    }
+  ],
+  // "ai": {
+  //   "binding": "AI"
+  // },
+  // "observability": {
+  //   "enabled": true,
+  //   "head_sampling_rate": 1
+  // }
+}
