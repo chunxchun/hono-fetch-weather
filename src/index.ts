@@ -1,33 +1,150 @@
 import { Hono } from "hono";
+import { bearerAuth } from 'hono/bearer-auth'
+import { cors } from 'hono/cors'
+
 import { load } from "cheerio";
 import { v4 as uuidv4 } from "uuid";
 import { drizzle } from "drizzle-orm/d1";
+import { generateDocx } from './lib/genDocx'
+import { uuid } from "drizzle-orm/gel-core";
 
 type Bindings = {
-  // DAILY_WEATHER_REPORT_LINKS: KVNamespace;
+  MY_DOMAIN: KVNamespace;
   DB: D1Database;
+  BUCKET: R2Bucket;
   API_KEY: string;
 };
 const app = new Hono<{ Bindings: Bindings }>();
 
-app.get("/", (c) => {
-  return c.text("Hello Hono!");
-});
-app.notFound((c) => c.text("404", 404));
+const token = 'joerogan'
+const myAppDomain = 'https://cf-react-demo-app.find2meals.workers.dev'
+const allowedOrigin = [myAppDomain]
 
-// const saveToD1 = async (c) => {
-//   const db = drizzle(c.env.DB);
-//   const result = await db.select().from(press_release).all();
-// };
-app.get("/api/weather/hourly-readings/:yyyy/:mm/:dd", async (c) => {
+app.use('*', cors({
+  origin: allowedOrigin,
+  allowMethods: ['GET', 'POST'],
+  allowHeaders: ['Authorization'],
+}));
+app.use('*', bearerAuth({ token }));
+
+app.get("/", (c) => {
+  return c.json({ name: "Hello Hono!" });
+});
+app.notFound((c) => c.json({ err: "File not found" }, 404));
+
+app.get('/api/test2', async (c) => {
+  console.log('test2 get')
+  // const q = c.req.query('abc')
+  return c.json({ name: "test2 get done" })
+})
+
+app.post('/api/test', async (c) => {
+  console.log('test post')
+  const q = c.req.query('q')
+  console.log('query:', q)
+  if (q === '123') {
+    console.log('redirect')
+    return c.redirect('/api/test2', 301);
+  }
+
+  return c.json({ msg: 'test post done' })
+})
+
+app.post('/api/upload-image', async (c) => {
+
+  const key = uuidv4();
+  const formData = await c.req.parseBody();
+  const imageFile = formData['imageFile'];
+
+  if (!(imageFile instanceof File)) {
+    return c.json({ err: 'Not a file' }, 400);
+  }
+
+  if (imageFile.type !== "image/*") {
+    return c.json({ err: "Upload file is not an image" }, 400)
+  }
+
+  try {
+
+    const fileBuffer = await imageFile.arrayBuffer();
+    const fileName = imageFile.name;
+    const ext = fileName.split('.').pop();
+    const path = `${key}.${ext}`
+    console.log(fileName, ext, path)
+
+    await c.env.BUCKET.put(path, fileBuffer);
+
+    return c.json({ msg: "Image file saved to R2", imageUrl: path })
+  } catch (err) {
+    return c.json({ err: err }, 400)
+  }
+})
+
+app.get("/api/download-image/:key", async (c) => {
+
+  const key = c.req.param('key');
+
+  try {
+
+    const object = await c.env.BUCKET.get(key);
+
+    if (object === null) {
+      return c.json({ err: "File not found" }, 404);
+    }
+
+    return c.newResponse(object.body, 200, { ETag: object.httpEtag })
+  } catch (err) {
+    return c.json({ err: err, key: key }, 400)
+  }
+})
+
+app.get('/api/daily-report-images/:id', async (c) => { })
+app.post('/api/daily-report-images/:id', async (c) => { })
+
+// get the heat stress work warning content from d1
+app.get("/api/weather/heat-stress-work-warning/:yyyy/:mm/:dd", async (c) => {
   const yyyy = c.req.param("yyyy");
   const mm = c.req.param("mm");
   const dd = c.req.param("dd");
   const date = `${yyyy}-${mm}-${dd}`;
 
-  // get all hourly readings for [date]
+  if (!yyyy || !mm || !dd) {
+    return c.json({ err: "enter a valid date" }, 400);
+  }
+
+  try {
+
+  } catch (err) {
+    return c.json({ err: err }, 500)
+  }
 });
-// get a weather press hourly readings content, and save the text to d1
+
+// fetch a heat stress work warning content, and save the text to d1
+app.post("/api/weather/heat-stress-work-warning/:yyyy/:mm/:dd", async (c) => {
+  const yyyy = c.req.param("yyyy");
+  const mm = c.req.param("mm");
+  const dd = c.req.param("dd");
+  const date = `${yyyy}-${mm}-${dd}`;
+
+  if (!yyyy || !mm || !dd) {
+    return c.json({ err: "enter a valid date" }, 400);
+  }
+
+  try { } catch (err) { return c.json({ err: err }) }
+});
+
+// get the weather press hourly reading content from d1
+app.get("/api/weather/hourly-readings", async (c) => {
+  const url = c.req.query("url");
+
+  if (!url) {
+    return c.json({ err: 'enter url' }, 400);;
+  }
+
+  try { } catch (err) { return c.json({ err: err }) }
+});
+
+// fetch a weather press hourly readings content, and save the text to d1
 app.post("/api/weather/hourly-readings", async (c) => {
   const url = c.req.query("url");
 
@@ -68,6 +185,7 @@ app.post("/api/weather/hourly-readings", async (c) => {
   });
 });
 
+// get all weather press links of a particular day from d1
 app.get("/api/weather/press_links/:yyyy/:mm/:dd", async (c) => {
   const yyyy = c.req.param("yyyy");
   const mm = c.req.param("mm");
@@ -75,7 +193,7 @@ app.get("/api/weather/press_links/:yyyy/:mm/:dd", async (c) => {
   const date = `${yyyy}-${mm}-${dd}`;
 
   if (!yyyy || !mm || !dd) {
-    return c.text("enter date", 400);
+    return c.json({ err: "enter date" }, 400);
   }
 
   try {
@@ -92,6 +210,7 @@ app.get("/api/weather/press_links/:yyyy/:mm/:dd", async (c) => {
   }
 });
 
+// fetch from hko data, and save all weather press links of a particular day to d1
 app.post("/api/weather/press_links/:yyyy/:mm/:dd", async (c) => {
   const yyyy = c.req.param("yyyy");
   const mm = c.req.param("mm");
@@ -147,5 +266,24 @@ app.post("/api/weather/press_links/:yyyy/:mm/:dd", async (c) => {
     return c.json({ err: err });
   }
 });
+
+
+app.get("/api/html", async (c) => { try { } catch (err) { return c.json({ err: err }) } })
+app.get("/api/docx", async (c) => {
+  try {
+    const docBuffer = await generateDocx('abc', c);
+
+    try {
+      const docId = uuidv4();
+      await c.env.BUCKET.put(`${docId}.docx`, docBuffer);
+      console.log('Successfully uploaded to R2 bucket');
+    } catch (err) {
+      return c.json({ error: 'Failed to upload document to storage' }, 500);
+
+    }
+
+  } catch (err) { return c.json({ err: err }) }
+})
+app.get("/api/pdf", async (c) => { try { } catch (err) { return c.json({ err: err }) } })
 
 export default app;

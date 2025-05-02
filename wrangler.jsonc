@@ -11,16 +11,16 @@
   // },
   "kv_namespaces": [
     {
-      "binding": "DAILY_WEATHER_REPORT_LINKS",
-      "id": "cb50efc5337e45299df7fb73d07037ac"
+      "binding": "MY_DOMAIN",
+      "id": "1f3c8549d7f045319426071142e3a889"
     }
   ],
-  // "r2_buckets": [
-  //   {
-  //     "binding": "MY_BUCKET",
-  //     "bucket_name": "my-bucket"
-  //   }
-  // ],
+  "r2_buckets": [
+    {
+      "binding": "BUCKET",
+      "bucket_name": "demo"
+    }
+  ],
   "d1_databases": [
     {
       "binding": "DB",
