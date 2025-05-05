@@ -35,7 +35,7 @@ app.use(
 app.use("*", bearerAuth({ token: bearerToken }));
 
 app.get("/", (c) => c.json({ name: "Hello Hono!" }, 200));
-app.notFound((c) => c.json({ err: "File not found" }, 404));
+app.notFound((c) => c.json({ success: false, message: "File not found" }, 404));
 
 app.route("/api/tests", testsRoute);
 app.route("/api/invoices", invoicesRoute);

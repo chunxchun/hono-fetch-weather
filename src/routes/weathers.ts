@@ -2,11 +2,20 @@ import { Hono } from "hono";
 import { Bindings, weatherBaseUrl } from "../config";
 import { load } from "cheerio";
 import { v4 as uuidv4 } from "uuid";
-import * as dayjs from "dayjs";
+import dayjs from "dayjs";
+import customParseFormat from "dayjs/plugin/customParseFormat";
+dayjs.extend(customParseFormat);
 
 import type { PressLink, HourlyReading, HSWW } from "../types/weather";
 
 const app = new Hono<{ Bindings: Bindings }>();
+
+app.get("/", async (c) => {
+  return c.json(
+    { success: true, message: "fetch weather routes success" },
+    200
+  );
+});
 
 // get all weather press links of a particular day from d1
 app.get("/press_links/:yyyy/:mm/:dd", async (c) => {
@@ -14,13 +23,17 @@ app.get("/press_links/:yyyy/:mm/:dd", async (c) => {
   const date = `${yyyy}-${mm}-${dd}`;
 
   if (!yyyy || !mm || !dd) {
-    return c.json({ succss: false, message: "enter a valid date" }, 400);
+    return c.json({ succss: false, message: `enter a valid date` }, 400);
   }
-
-  if (!dayjs(date).isValid()) {
-    return c.json({ succss: false, message: "enter a valid date" }, 400);
+  // dayjs('2022-01-33').isValid();
+  // true, parsed to 2022-02-02
+  if (!dayjs(date, "YYYY-MM-DD", true).isValid()) {
+    return c.json(
+      { succss: false, message: `${date} is not a valid date` },
+      400
+    );
   }
-
+  // return c.json({ date: `${date}` });
   try {
     // fetch database
     const { results } = await c.env.DB.prepare(
@@ -44,8 +57,11 @@ app.post("/press_links/:yyyy/:mm/:dd", async (c) => {
     return c.json({ succss: false, message: "enter a valid date" }, 400);
   }
 
-  if (!dayjs(date).isValid()) {
-    return c.json({ succss: false, message: "enter a valid date" }, 400);
+  if (!dayjs(date, "YYYY-MM-DD", true).isValid()) {
+    return c.json(
+      { succss: false, message: `${date} is not a valid date` },
+      400
+    );
   }
 
   try {
@@ -63,7 +79,7 @@ app.post("/press_links/:yyyy/:mm/:dd", async (c) => {
       const pressLink: PressLink = {
         id: uuidv4(),
         title: $(el).text(),
-        url: $(el).children("a").attr("href") || "",
+        url: "https://www.info.gov.hk" + $(el).children("a").attr("href") || "",
         press_release_date: date,
         created_at: today,
         updated_at: today,
@@ -91,9 +107,12 @@ app.post("/press_links/:yyyy/:mm/:dd", async (c) => {
 
     await c.env.DB.prepare(sqlInsert).all();
 
-    return c.json({ success: true, message: "done", pressLinks: pressLinks });
+    return c.json(
+      { success: true, message: "Create press links success", results: pressLinks },
+      200
+    );
   } catch (err) {
-    return c.json({ success: false, message: err });
+    return c.json({ success: false, message: err }, 400);
   }
 });
 

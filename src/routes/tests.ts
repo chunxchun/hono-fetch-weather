@@ -3,7 +3,7 @@ import { Bindings } from "../config";
 
 const app = new Hono<{ Bindings: Bindings }>();
 
-app.post("/api/test", async (c) => {
+app.post("/", async (c) => {
   const { q } = c.req.query();
   if (q === "123") {
     console.log("redirect");
@@ -13,7 +13,7 @@ app.post("/api/test", async (c) => {
   return c.json({ msg: "test post done" });
 });
 
-app.get("/api/test2", async (c) => {
+app.get("/test2", async (c) => {
   return c.json({ name: "test2 get done" });
 });
 
