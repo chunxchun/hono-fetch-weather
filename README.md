@@ -19,3 +19,18 @@ Pass the `CloudflareBindings` as generics when instantiation `Hono`:
 // src/index.ts
 const app = new Hono<{ Bindings: CloudflareBindings }>()
 ```
+
+initialize database, test locally
+```txt
+npx wrangler d1 execute [DB] --local --file=./schema.sql
+```
+
+list tables
+```txt
+npx wrangler d1 execute [DB] --command "SELECT name, sql FROM sqlite_master"
+```
+
+select from table
+```txt
+npx wrangler d1 execute [DB] --command "select * from [table]"
+```

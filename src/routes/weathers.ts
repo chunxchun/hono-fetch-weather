@@ -4,6 +4,8 @@ import { load } from "cheerio";
 import { v4 as uuidv4 } from "uuid";
 import * as dayjs from "dayjs";
 
+import type { PressLink, HourlyReading, HSWW } from "../types/weather";
+
 const app = new Hono<{ Bindings: Bindings }>();
 
 // get all weather press links of a particular day from d1
@@ -54,14 +56,6 @@ app.post("/press_links/:yyyy/:mm/:dd", async (c) => {
       "#contentBody > div.colLeft.w635.resLeftContent > div.leftBody > ul";
     const pressLinkElements = $(pressLinkSelector).children("li");
 
-    type PressLink = {
-      id: string;
-      title: string;
-      url: string;
-      press_release_date: string;
-      created_at: string;
-      updated_at: string;
-    };
     const pressLinks: Array<PressLink> = [];
     const today = dayjs().format("YYYY-MM-DD");
 
@@ -152,7 +146,7 @@ app.get("/hourly-readings/:id", async (c) => {
     if (results.length === 0) {
       return c.json({ success: false, message: "No record found" }, 400);
     }
-    
+
     return c.json({
       success: true,
       message: "Read record success",
@@ -203,19 +197,6 @@ app.post("/hourly-readings", async (c) => {
       reportContent.match(
         /(?<=AT )(.*?)(?= AT THE HONG KONG OBSERVATORY)/g
       )?.[0] || "";
-
-    type HourlyReading = {
-      id: string;
-      // title: string;
-      content: string;
-      url: string;
-      temperature: string;
-      humidity: string;
-      report_date: string;
-      report_time: string;
-      created_at: string;
-      updated_at: string;
-    };
 
     const id = uuidv4();
     const today = dayjs().format("YYYY-MM-DD");

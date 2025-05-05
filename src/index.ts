@@ -2,7 +2,6 @@ import { Hono } from "hono";
 import { bearerAuth } from "hono/bearer-auth";
 import { cors } from "hono/cors";
 
-import { load } from "cheerio";
 import { v4 as uuidv4 } from "uuid";
 import { drizzle } from "drizzle-orm/d1";
 import { uuid } from "drizzle-orm/gel-core";
