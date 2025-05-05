@@ -7,7 +7,6 @@ import customParseFormat from "dayjs/plugin/customParseFormat";
 dayjs.extend(customParseFormat);
 
 import type { PressLink, HourlyReading, HSWW } from "../types/weather";
-import { report } from "process";
 
 const app = new Hono<{ Bindings: Bindings }>();
 
@@ -196,7 +195,7 @@ app.post("/hsww/:id/:url", async (c) => {
     // extract information
     const level =
       reportContent.match(
-        /(?<=A reminder from the Labour Department: The )(.*?)(?=  Heat Stress at Work Warning)/g
+        /(?<=A reminder from the Labour Department: The )(.*?)(?= Heat Stress at Work Warning)/g
       )?.[0] || "";
     const start_time =
       reportContent.match(
