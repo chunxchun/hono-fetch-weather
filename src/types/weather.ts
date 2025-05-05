@@ -24,6 +24,10 @@ export type HSWW = {
   id: string;
   content: string;
   url: string;
+  level?: string;
+  report_date: string;
+  start_time?: string;
+  cancelled_time?: string;
   created_at: string;
-  updated_at: string; 
+  updated_at: string;
 };

@@ -7,6 +7,7 @@ import customParseFormat from "dayjs/plugin/customParseFormat";
 dayjs.extend(customParseFormat);
 
 import type { PressLink, HourlyReading, HSWW } from "../types/weather";
+import { report } from "process";
 
 const app = new Hono<{ Bindings: Bindings }>();
 
@@ -42,9 +43,17 @@ app.get("/press_links/:yyyy/:mm/:dd", async (c) => {
       .bind(date)
       .all();
 
-    return c.json({ success: true, date: date, results: results });
+    return c.json({
+      success: true,
+      message: `Read ${date} press links success`,
+      results: results,
+    });
   } catch (err) {
-    return c.json({ success: false, message: err });
+    return c.json({
+      success: false,
+      message: `Read ${date} press links failed`,
+      err: err,
+    });
   }
 });
 
@@ -108,7 +117,11 @@ app.post("/press_links/:yyyy/:mm/:dd", async (c) => {
     await c.env.DB.prepare(sqlInsert).all();
 
     return c.json(
-      { success: true, message: "Create press links success", results: pressLinks },
+      {
+        success: true,
+        message: "Create press links success",
+        results: pressLinks,
+      },
       200
     );
   } catch (err) {
@@ -117,38 +130,149 @@ app.post("/press_links/:yyyy/:mm/:dd", async (c) => {
 });
 
 // get the heat stress work warning content from d1
-app.get("/hsww/:yyyy/:mm/:dd", async (c) => {
-  const { yyyy, mm, dd } = c.req.param();
-  const date = `${yyyy}-${mm}-${dd}`;
+app.get("/hsww/:id", async (c) => {
+  const { id } = c.req.param();
 
-  if (!yyyy || !mm || !dd) {
-    return c.json({ err: "enter a valid date" }, 400);
+  if (!id) {
+    return c.json({ success: false, message: "enter a valid id" }, 400);
   }
 
   try {
+    // fetch database
+    const { results } = await c.env.DB.prepare(
+      "SELECT * FROM heat_stress_work_warnings WHERE id = ?"
+    )
+      .bind(id)
+      .all();
+
+    return c.json(
+      {
+        success: true,
+        message: "Read heat stress work warning success",
+        results: results,
+      },
+      200
+    );
   } catch (err) {
-    return c.json({ err: err }, 500);
+    return c.json(
+      {
+        success: false,
+        message: "Read heat stress work warning failed",
+        err: err,
+      },
+      400
+    );
   }
 });
 
 // fetch a heat stress work warning content, and save the text to d1
-app.post("/hsww/:yyyy/:mm/:dd", async (c) => {
-  const { yyyy, mm, dd } = c.req.param();
-  const date = `${yyyy}-${mm}-${dd}`;
+app.post("/hsww/:id/:url", async (c) => {
+  const { id, url } = c.req.param();
 
-  if (!yyyy || !mm || !dd) {
-    return c.json({ err: "enter a valid date" }, 400);
+  if (!id) {
+    return c.json({ success: false, message: "enter a valid id" }, 400);
   }
 
+  if (!url) {
+    return c.json({ success: false, message: "enter a valid url" }, 400);
+  }
+
+  const decodeUrl = decodeURI(url);
+  const dateStr = decodeUrl.split("/").pop()?.slice(1, 9);
+  const yyyy = dateStr?.slice(0, 4);
+  const mm = dateStr?.slice(4, 6);
+  const dd = dateStr?.slice(6, 8);
+
+  const date = `${yyyy}-${mm}-${dd}`;
+
   try {
+    const content = await fetch(url);
+    const html = await content.text();
+
+    const $ = load(html);
+    const reportSelector = "#pressrelease";
+    const reportContent = $(reportSelector).text();
+
+    // extract information
+    const level =
+      reportContent.match(
+        /(?<=A reminder from the Labour Department: The )(.*?)(?=  Heat Stress at Work Warning)/g
+      )?.[0] || "";
+    const start_time =
+      reportContent.match(
+        /(?<=Heat Stress at Work Warning is in force as of )(.*?)(?= today)/g
+      )?.[0] || "";
+    const cancelled_time =
+      reportContent.match(
+        /(?<=The Heat Stress at Work Warning has been cancelled at )(.*?)(?= today)/g
+      )?.[0] || "";
+
+    const today = dayjs().format("YYYY-MM-DD");
+    const hsww: HSWW = {
+      id: id,
+      content: reportContent,
+      url: url,
+      level: level,
+      report_date: date,
+      start_time: start_time,
+      cancelled_time: cancelled_time,
+      created_at: today,
+      updated_at: today,
+    };
+
+    // prepare sql
+    const columns = [
+      "id",
+      "content",
+      "url",
+      "level",
+      "report_date",
+      "start_time",
+      "cancelled_time",
+      "created_at",
+      "updated_at",
+    ];
+    const columnStr = columns.join(",");
+    const tableName = "heat_stress_work_warnings";
+    const insertValues = `(
+    "${hsww.id}", 
+    "${hsww.content}", 
+    "${hsww.url}", 
+    "${hsww.level}", 
+    "${hsww.report_date}",
+    "${hsww.start_time}",
+    "${hsww.cancelled_time}",
+    "${hsww.created_at}", 
+    "${hsww.updated_at}"
+    )`;
+    const sqlInsert = `INSERT INTO ${tableName} (${columnStr}) VALUES ${insertValues}`;
+
+    // insert to d1
+    await c.env.DB.prepare(sqlInsert).all();
+
+    return c.json(
+      {
+        success: true,
+        message: "Create heat stress work warning success",
+        results: hsww,
+      },
+      200
+    );
   } catch (err) {
-    return c.json({ err: err });
+    return c.json(
+      {
+        success: false,
+        message: "Create heat stress work warning failed",
+        err: err,
+      },
+      400
+    );
   }
 });
 
 // get the weather press hourly reading content from d1
-app.get("/hourly-readings/:id", async (c) => {
-  const { id } = c.req.query();
+app.get("/hourly_readings/:id", async (c) => {
+  const { id } = c.req.param();
 
   if (!id) {
     return c.json({ success: false, message: "enter a valid id" }, 400);
@@ -162,42 +286,48 @@ app.get("/hourly-readings/:id", async (c) => {
       .bind(id)
       .all();
 
-    if (results.length === 0) {
-      return c.json({ success: false, message: "No record found" }, 400);
-    }
-
-    return c.json({
-      success: true,
-      message: "Read record success",
-      results: results,
-    });
+    return c.json(
+      {
+        success: true,
+        message: "Read hourly reading success",
+        results: results,
+      },
+      200
+    );
   } catch (err) {
-    return c.json({ success: false, message: err });
+    return c.json(
+      {
+        success: false,
+        message: "Read hourly reading failed",
+        err: err,
+      },
+      400
+    );
   }
 });
 
 // fetch a weather press hourly readings content, and save the text to d1
-app.post("/hourly-readings", async (c) => {
-  const { url } = c.req.query();
+app.post("/hourly_readings/:id/:url", async (c) => {
+  const { id, url } = c.req.param();
+
+  if (!id) {
+    return c.json({ success: false, message: "enter a valid id" }, 400);
+  }
 
   if (!url) {
     return c.json({ success: false, message: "enter a valid url" }, 400);
   }
 
-  // console.log(url);
   const decodeUrl = decodeURI(url);
-  // console.log(decodeUrl);
   const dateStr = decodeUrl.split("/").pop()?.slice(1, 9);
   const yyyy = dateStr?.slice(0, 4);
   const mm = dateStr?.slice(4, 6);
   const dd = dateStr?.slice(6, 8);
 
   const date = `${yyyy}-${mm}-${dd}`;
-  const baseUrl = "https://www.info.gov.hk";
-  const fullUrl = `${baseUrl}${url}`;
 
   try {
-    const content = await fetch(fullUrl);
+    const content = await fetch(url);
     const html = await content.text();
 
     const $ = load(html);
@@ -217,12 +347,11 @@ app.post("/hourly-readings", async (c) => {
         /(?<=AT )(.*?)(?= AT THE HONG KONG OBSERVATORY)/g
       )?.[0] || "";
 
-    const id = uuidv4();
     const today = dayjs().format("YYYY-MM-DD");
     const hourlyReading: HourlyReading = {
       id: id,
       content: reportContent,
-      url: fullUrl,
+      url: url,
       temperature: temperature,
       humidity: humidity,
       report_time: time,
@@ -230,7 +359,7 @@ app.post("/hourly-readings", async (c) => {
       created_at: today,
       updated_at: today,
     };
-    // const columns = Object.keys(hourlyReading);
+
     // prepare sql
     const columns = [
       "id",
@@ -261,13 +390,23 @@ app.post("/hourly-readings", async (c) => {
     // insert to d1
     await c.env.DB.prepare(sqlInsert).all();
 
-    return c.json({
-      success: true,
-      message: "Create hourly reading success",
-      results: hourlyReading,
-    });
+    return c.json(
+      {
+        success: true,
+        message: "Create hourly reading success",
+        results: hourlyReading,
+      },
+      200
+    );
   } catch (err) {
-    return c.json({ success: false, message: err });
+    return c.json(
+      {
+        success: false,
+        message: "Create hourly reading failed",
+        err: err,
+      },
+      400
+    );
   }
 });
 

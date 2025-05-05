@@ -29,6 +29,11 @@ CREATE TABLE IF NOT EXISTS "heat_stress_work_warnings" (
   "id" text PRIMARY KEY,
   "content" text NOT NULL,
   "url" text NOT NULL,
+  "level" text NULL,
+  "report_date" text NOT NULL,
+  "start_time" text NULL,
+  "cancelled_time" text NULL,
   "created_at" text NOT NULL,
-  "updated_at" text NOT NULL
+  "updated_at" text NOT NULL,
+
 );
