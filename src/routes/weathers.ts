@@ -319,6 +319,47 @@ app.post("/hsww/:id/:url", async (c) => {
   }
 });
 
+app.get('/hourly_readings/:yyyy/:mm/:dd', async (c) => {
+  const { yyyy, mm, dd } = c.req.param();
+  const date = `${yyyy}-${mm}-${dd}`;
+
+  if (!yyyy || !mm || !dd) {
+    return c.json({ succss: false, message: `enter a valid date` }, 400);
+  }
+  // dayjs('2022-01-33').isValid();
+  // true, parsed to 2022-02-02
+  if (!dayjs(date, "YYYY-MM-DD", true).isValid()) {
+    return c.json(
+      { succss: false, message: `${date} is not a valid date` },
+      400
+    );
+  }
+
+  try {
+    // fetch database
+    const { success, results } = await c.env.DB.prepare(
+      "SELECT * FROM hourly_readings WHERE report_date = ?"
+    )
+      .bind(date)
+      .all();
+
+    if (!success) {
+      return c.json({ success: false, message: `fetch d1 ${date} hourly readings failed` }, 400)
+    }
+
+    return c.json({
+      success: true,
+      message: `fetch d1 ${date} hourly readings success`,
+      results: results,
+    });
+  } catch (err) {
+    return c.json({
+      success: false,
+      message: `fetch ${date} press links failed`,
+      err: err,
+    });
+  }
+})
 
 // get the weather press hourly reading content from d1
 app.get("/hourly_readings/:id", async (c) => {
