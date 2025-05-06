@@ -132,48 +132,8 @@ app.post("/press_links/:yyyy/:mm/:dd", async (c) => {
   }
 });
 
-app.get('/hsww/:yyyy/:mm/:dd', async (c) => {
-  const { yyyy, mm, dd } = c.req.param();
-  const date = `${yyyy}-${mm}-${dd}`;
-
-  if (!yyyy || !mm || !dd) {
-    return c.json({ succss: false, message: "enter a valid date" }, 400);
-  }
-
-  if (!dayjs(date, "YYYY-MM-DD", true).isValid()) {
-    return c.json(
-      { succss: false, message: `${date} is not a valid date` },
-      400
-    );
-  }
-
-  try {
-    // fetch database
-    const { success, results } = await c.env.DB.prepare(
-      "SELECT * FROM heat_stress_work_warnings WHERE report_date = ?"
-    )
-      .bind(date)
-      .all();
-
-    if (!success) {
-      return c.json({ success: false, message: `fetch d1 heat stress work warnings failed` }, 400)
-    }
-
-    return c.json({
-      success: true,
-      message: `fetch d1 ${date} heat stress work warnings success`,
-      results: results
-    }, 200);
-  } catch (err) {
-    return c.json({
-      success: false,
-      message: `fetch ${date} heat stress work warnings failed`
-    }, 400)
-  }
-})
-
 // get the heat stress work warning content from d1
-app.get("/hsww/:id", async (c) => {
+app.get("/heat_stress_work_warnings/:id", async (c) => {
   const { id } = c.req.param();
 
   if (!id) {
@@ -208,8 +168,8 @@ app.get("/hsww/:id", async (c) => {
   }
 });
 
-// fetch a heat stress work warning content, and save the text to d1
-app.post("/hsww/:id/:url", async (c) => {
+// fetch a heat stress work warning content, and save to d1
+app.post("/heat_stress_work_warnings/:id/:url", async (c) => {
   const { id, url } = c.req.param();
 
   if (!id) {
@@ -319,15 +279,15 @@ app.post("/hsww/:id/:url", async (c) => {
   }
 });
 
-app.get('/hourly_readings/:yyyy/:mm/:dd', async (c) => {
+// fetch all heat stress work warning of a particular date
+app.get('/heat_stress_work_warnings/:yyyy/:mm/:dd', async (c) => {
   const { yyyy, mm, dd } = c.req.param();
   const date = `${yyyy}-${mm}-${dd}`;
 
   if (!yyyy || !mm || !dd) {
-    return c.json({ succss: false, message: `enter a valid date` }, 400);
+    return c.json({ succss: false, message: "enter a valid date" }, 400);
   }
-  // dayjs('2022-01-33').isValid();
-  // true, parsed to 2022-02-02
+
   if (!dayjs(date, "YYYY-MM-DD", true).isValid()) {
     return c.json(
       { succss: false, message: `${date} is not a valid date` },
@@ -338,28 +298,28 @@ app.get('/hourly_readings/:yyyy/:mm/:dd', async (c) => {
   try {
     // fetch database
     const { success, results } = await c.env.DB.prepare(
-      "SELECT * FROM hourly_readings WHERE report_date = ?"
+      "SELECT * FROM heat_stress_work_warnings WHERE report_date = ?"
     )
       .bind(date)
       .all();
 
     if (!success) {
-      return c.json({ success: false, message: `fetch d1 ${date} hourly readings failed` }, 400)
+      return c.json({ success: false, message: `fetch d1 heat stress work warnings failed` }, 400)
     }
 
     return c.json({
       success: true,
-      message: `fetch d1 ${date} hourly readings success`,
-      results: results,
-    });
+      message: `fetch d1 ${date} heat stress work warnings success`,
+      results: results
+    }, 200);
   } catch (err) {
     return c.json({
       success: false,
-      message: `fetch ${date} press links failed`,
-      err: err,
-    });
+      message: `fetch ${date} heat stress work warnings failed`
+    }, 400)
   }
 })
+
 
 // get the weather press hourly reading content from d1
 app.get("/hourly_readings/:id", async (c) => {
@@ -495,5 +455,49 @@ app.post("/hourly_readings/:id/:url", async (c) => {
     );
   }
 });
+
+// fetch hourly report of a particular date
+app.get('/hourly_readings/:yyyy/:mm/:dd', async (c) => {
+  const { yyyy, mm, dd } = c.req.param();
+  const date = `${yyyy}-${mm}-${dd}`;
+
+  if (!yyyy || !mm || !dd) {
+    return c.json({ succss: false, message: `enter a valid date` }, 400);
+  }
+  // dayjs('2022-01-33').isValid();
+  // true, parsed to 2022-02-02
+  if (!dayjs(date, "YYYY-MM-DD", true).isValid()) {
+    return c.json(
+      { succss: false, message: `${date} is not a valid date` },
+      400
+    );
+  }
+
+  try {
+    // fetch database
+    const { success, results } = await c.env.DB.prepare(
+      "SELECT * FROM hourly_readings WHERE report_date = ?"
+    )
+      .bind(date)
+      .all();
+
+    if (!success) {
+      return c.json({ success: false, message: `fetch d1 ${date} hourly readings failed` }, 400)
+    }
+
+    return c.json({
+      success: true,
+      message: `fetch d1 ${date} hourly readings success`,
+      results: results,
+    });
+  } catch (err) {
+    return c.json({
+      success: false,
+      message: `fetch ${date} hourly readings failed`,
+      err: err,
+    });
+  }
+})
+
 
 export default app;

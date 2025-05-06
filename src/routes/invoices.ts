@@ -5,21 +5,23 @@ import { v4 as uuidv4 } from "uuid";
 
 const app = new Hono<{ Bindings: Bindings }>();
 
-app.get("/api/html", async (c) => {
+app.get("/html", async (c) => {
   try {
   } catch (err) {
     return c.json({ err: err });
   }
 });
 
-app.get("/api/docx", async (c) => {
+app.get("/docx", async (c) => {
   try {
     const docBuffer = await generateDocx("abc", c);
 
     try {
       const docId = uuidv4();
-      await c.env.BUCKET.put(`./docx/${docId}.docx`, docBuffer);
+      const path = `./docx/${docId}.docx`
+      const result = await c.env.BUCKET.put(path, docBuffer);
       console.log("Successfully uploaded to R2 bucket");
+      return c.json({ success: true, message: `doc saved to ${path}`, result: result})
     } catch (err) {
       return c.json({ error: "Failed to upload document to storage" }, 500);
     }
@@ -28,7 +30,7 @@ app.get("/api/docx", async (c) => {
   }
 });
 
-app.get("/api/pdf", async (c) => {
+app.get("/pdf", async (c) => {
   try {
   } catch (err) {
     return c.json({ err: err });

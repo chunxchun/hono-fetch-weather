@@ -40,19 +40,19 @@ export const generateDocx = async (data: string, c: Context) => {
                 {
                     properties: {},
                     children: [
-                        new Table({
-                            rows: [
-                                new TableRow({
-                                    children: [
-                                        await createTableCell('1', Buffer.from(await getR2ImageHandler('sc', c))),
-                                        await createTableCell('2', Buffer.from(await getR2ImageHandler('sc', c)))
-                                    ]
-                                })
-                            ]
-                        }),
+                        // new Table({
+                        //     rows: [
+                        //         new TableRow({
+                        //             children: [
+                        //                 await createTableCell('1', Buffer.from(await getR2ImageHandler('sc', c))),
+                        //                 await createTableCell('2', Buffer.from(await getR2ImageHandler('sc', c)))
+                        //             ]
+                        //         })
+                        //     ]
+                        // }),
                         new Paragraph({
                             children: [
-                                new TextRun("Hello World"),
+                                new TextRun(data),
                                 new TextRun({
                                     text: "Foo Bar",
                                     bold: true,
