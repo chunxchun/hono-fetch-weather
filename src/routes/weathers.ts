@@ -36,21 +36,25 @@ app.get("/press_links/:yyyy/:mm/:dd", async (c) => {
   // return c.json({ date: `${date}` });
   try {
     // fetch database
-    const { results } = await c.env.DB.prepare(
+    const { success, results } = await c.env.DB.prepare(
       "SELECT * FROM press_links WHERE press_release_date = ?"
     )
       .bind(date)
       .all();
 
+    if (!success) {
+      return c.json({ success: false, message: `fetch d1 press links failed` }, 400)
+    }
+
     return c.json({
       success: true,
-      message: `Read ${date} press links success`,
+      message: `fetch d1 ${date} press links success`,
       results: results,
     });
   } catch (err) {
     return c.json({
       success: false,
-      message: `Read ${date} press links failed`,
+      message: `fetch ${date} press links failed`,
       err: err,
     });
   }
@@ -128,6 +132,46 @@ app.post("/press_links/:yyyy/:mm/:dd", async (c) => {
   }
 });
 
+app.get('/hsww/:yyyy/:mm/:dd', async (c) => {
+  const { yyyy, mm, dd } = c.req.param();
+  const date = `${yyyy}-${mm}-${dd}`;
+
+  if (!yyyy || !mm || !dd) {
+    return c.json({ succss: false, message: "enter a valid date" }, 400);
+  }
+
+  if (!dayjs(date, "YYYY-MM-DD", true).isValid()) {
+    return c.json(
+      { succss: false, message: `${date} is not a valid date` },
+      400
+    );
+  }
+
+  try {
+    // fetch database
+    const { success, results } = await c.env.DB.prepare(
+      "SELECT * FROM heat_stress_work_warnings WHERE report_date = ?"
+    )
+      .bind(date)
+      .all();
+
+    if (!success) {
+      return c.json({ success: false, message: `fetch d1 heat stress work warnings failed` }, 400)
+    }
+
+    return c.json({
+      success: true,
+      message: `fetch d1 ${date} heat stress work warnings success`,
+      results: results
+    }, 200);
+  } catch (err) {
+    return c.json({
+      success: false,
+      message: `fetch ${date} heat stress work warnings failed`
+    }, 400)
+  }
+})
+
 // get the heat stress work warning content from d1
 app.get("/hsww/:id", async (c) => {
   const { id } = c.req.param();
@@ -169,11 +213,11 @@ app.post("/hsww/:id/:url", async (c) => {
   const { id, url } = c.req.param();
 
   if (!id) {
-    return c.json({ success: false, message: "enter a valid id" }, 400);
+    return c.json({ success: false, message: "enter a valid id for hsww" }, 400);
   }
 
   if (!url) {
-    return c.json({ success: false, message: "enter a valid url" }, 400);
+    return c.json({ success: false, message: "enter a valid url for hsww" }, 400);
   }
 
   const decodeUrl = decodeURI(url);
@@ -185,7 +229,7 @@ app.post("/hsww/:id/:url", async (c) => {
   const date = `${yyyy}-${mm}-${dd}`;
 
   try {
-    const content = await fetch(url);
+    const content = await fetch(decodeUrl);
     const html = await content.text();
 
     const $ = load(html);
@@ -209,7 +253,7 @@ app.post("/hsww/:id/:url", async (c) => {
     const today = dayjs().format("YYYY-MM-DD");
     const hsww: HSWW = {
       id: id,
-      content: reportContent,
+      content: reportContent.replaceAll('"', ''),
       url: url,
       level: level,
       report_date: date,
@@ -244,10 +288,16 @@ app.post("/hsww/:id/:url", async (c) => {
     "${hsww.created_at}", 
     "${hsww.updated_at}"
     )`;
+
     const sqlInsert = `INSERT INTO ${tableName} (${columnStr}) VALUES ${insertValues}`;
+    const trimmedSqlInsert = sqlInsert.replaceAll("\n", "").replaceAll("\t", "").replaceAll("\\\"", "\"")
 
     // insert to d1
-    await c.env.DB.prepare(sqlInsert).all();
+    const insertResult = await c.env.DB.prepare(trimmedSqlInsert).all();
+
+    if (!insertResult.success) {
+      return c.json({ success: false, message: "Error inserting heat stress work warning data to d1" })
+    }
 
     return c.json(
       {
@@ -261,13 +311,14 @@ app.post("/hsww/:id/:url", async (c) => {
     return c.json(
       {
         success: false,
-        message: "Create heat stress work warning failed",
+        message: `Create heat stress work warning failed`,
         err: err,
       },
       400
     );
   }
 });
+
 
 // get the weather press hourly reading content from d1
 app.get("/hourly_readings/:id", async (c) => {
@@ -310,11 +361,11 @@ app.post("/hourly_readings/:id/:url", async (c) => {
   const { id, url } = c.req.param();
 
   if (!id) {
-    return c.json({ success: false, message: "enter a valid id" }, 400);
+    return c.json({ success: false, message: "enter a valid id for hourly reading" }, 400);
   }
 
   if (!url) {
-    return c.json({ success: false, message: "enter a valid url" }, 400);
+    return c.json({ success: false, message: "enter a valid url for hourly reading" }, 400);
   }
 
   const decodeUrl = decodeURI(url);
@@ -326,7 +377,7 @@ app.post("/hourly_readings/:id/:url", async (c) => {
   const date = `${yyyy}-${mm}-${dd}`;
 
   try {
-    const content = await fetch(url);
+    const content = await fetch(decodeUrl);
     const html = await content.text();
 
     const $ = load(html);
@@ -349,7 +400,7 @@ app.post("/hourly_readings/:id/:url", async (c) => {
     const today = dayjs().format("YYYY-MM-DD");
     const hourlyReading: HourlyReading = {
       id: id,
-      content: reportContent,
+      content: reportContent.replaceAll('"', ''),
       url: url,
       temperature: temperature,
       humidity: humidity,
@@ -373,21 +424,16 @@ app.post("/hourly_readings/:id/:url", async (c) => {
     ];
     const columnStr = columns.join(",");
     const tableName = "hourly_readings";
-    const insertValues = `(
-    "${hourlyReading.id}", 
-    "${hourlyReading.content}", 
-    "${hourlyReading.url}", 
-    "${hourlyReading.temperature}", 
-    "${hourlyReading.humidity}",
-    "${hourlyReading.report_time}",
-    "${hourlyReading.report_date}",
-    "${hourlyReading.created_at}", 
-    "${hourlyReading.updated_at}"
-    )`;
+    const insertValues = `("${hourlyReading.id}", "${hourlyReading.content}", "${hourlyReading.url}", "${hourlyReading.temperature}", "${hourlyReading.humidity}", "${hourlyReading.report_time}", "${hourlyReading.report_date}", "${hourlyReading.created_at}", "${hourlyReading.updated_at}")`;
     const sqlInsert = `INSERT INTO ${tableName} (${columnStr}) VALUES ${insertValues}`;
+    const trimmedSqlInsert = sqlInsert.replaceAll("\n", "").replaceAll("\t", "").replaceAll("\\\"", "\"")
 
     // insert to d1
-    await c.env.DB.prepare(sqlInsert).all();
+    const insertResult = await c.env.DB.prepare(trimmedSqlInsert).all();
+
+    if (!insertResult.success) {
+      return c.json({ success: false, message: "Error inserting hourly reading data to d1" })
+    }
 
     return c.json(
       {
