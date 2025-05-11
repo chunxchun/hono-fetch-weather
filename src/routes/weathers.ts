@@ -6,7 +6,11 @@ import dayjs from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat";
 dayjs.extend(customParseFormat);
 
-import type { PressLink, HourlyReading, HSWW } from "../types/weather";
+import type {
+  PressLink,
+  HourlyReading,
+  HeatStressWorkWarning,
+} from "../types/weather";
 
 const app = new Hono<{ Bindings: Bindings }>();
 
@@ -177,14 +181,14 @@ app.post("/heat_stress_work_warnings/:id/:url", async (c) => {
 
   if (!id) {
     return c.json(
-      { success: false, message: "enter a valid id for hsww" },
+      { success: false, message: "enter a valid id for heat stress work warning" },
       400
     );
   }
 
   if (!url) {
     return c.json(
-      { success: false, message: "enter a valid url for hsww" },
+      { success: false, message: "enter a valid url for heat stress work warning" },
       400
     );
   }
@@ -220,7 +224,7 @@ app.post("/heat_stress_work_warnings/:id/:url", async (c) => {
       )?.[0] || "";
 
     const today = dayjs().format("YYYY-MM-DD");
-    const hsww: HSWW = {
+    const hsww: HeatStressWorkWarning = {
       id: id,
       content: reportContent.replaceAll('"', ""),
       url: url,

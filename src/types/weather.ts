@@ -1,33 +1,12 @@
-export type PressLink = {
-  id: string;
-  title: string;
-  url: string;
-  press_release_date: string;
-  created_at: string;
-  updated_at: string;
-};
+import {
+  pressLinksTable,
+  hourlyReadingsTable,
+  heatStressWorkWarningsTable,
+} from "../db/weatherSchema";
 
-export type HourlyReading = {
-  id: string;
-  // title: string;
-  content: string;
-  url: string;
-  temperature: string;
-  humidity: string;
-  report_date: string;
-  report_time: string;
-  created_at: string;
-  updated_at: string;
-};
+export type PressLink =  typeof pressLinksTable.$inferInsert;
+export type HourlyReading =  typeof hourlyReadingsTable.$inferInsert;
+export type HeatStressWorkWarning = typeof heatStressWorkWarningsTable.$inferInsert;
 
-export type HSWW = {
-  id: string;
-  content: string;
-  url: string;
-  level?: string;
-  report_date: string;
-  start_time?: string;
-  cancelled_time?: string;
-  created_at: string;
-  updated_at: string;
-};
+
+

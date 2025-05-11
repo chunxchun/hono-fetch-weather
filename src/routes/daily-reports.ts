@@ -2,7 +2,11 @@ import { Hono } from "hono";
 import { appBaseUrl, BearerAuthHeader, bearerToken, Bindings } from "../config";
 import dayjs from "dayjs";
 import { v4 as uuidv4 } from "uuid";
-import { DAILY_REPORT_IMAGE } from "../types/dailyReport";
+import type { DailyReportImage } from "../types/dailyReport";
+import { drizzle } from "drizzle-orm/d1";
+import { dailyReportImagesTable } from "../db/dailyReportSchema";
+import { eq } from "drizzle-orm";
+import { insertDailyReportImage } from "../lib/database";
 
 const app = new Hono<{ Bindings: Bindings }>();
 
@@ -37,21 +41,26 @@ app.get("/images/:yyyy/:mm/:dd", async (c) => {
   try {
     // fetch database
     const table = "daily_report_images";
-    const sqlQuery = `SELECT * FROM ${table} WHERE date = ?`;
+    // const sqlQuery = `SELECT * FROM ${table} WHERE date = ?`;
 
-    const { success, results } = await c.env.DB.prepare(sqlQuery)
-      .bind(date)
-      .all();
+    // const { success, results } = await c.env.DB.prepare(sqlQuery)
+    //   .bind(date)
+    //   .all();
+    const db = drizzle(c.env.DB);
+    const results = await db
+      .select()
+      .from(dailyReportImagesTable)
+      .where(eq(dailyReportImagesTable.date, date));
 
-    if (!success) {
-      return c.json(
-        {
-          success: false,
-          message: `fetch d1 ${date} daily report images failed`,
-        },
-        400
-      );
-    }
+    // if (!success) {
+    //   return c.json(
+    //     {
+    //       success: false,
+    //       message: `fetch d1 ${date} daily report images failed`,
+    //     },
+    //     400
+    //   );
+    // }
 
     return c.json({
       success: true,
@@ -158,9 +167,23 @@ app.on(
       // save data to d1
       // prepare sql
       const today = dayjs().format("YYYY-MM-DD");
-      const columns = ["id", "date", "desc", "url", "created_at", "updated_at"];
-      const columnStr = columns.join(",");
-      const dailyReportImage: DAILY_REPORT_IMAGE = {
+      // const columns = ["id", "date", "desc", "url", "created_at", "updated_at"];
+      // const columnStr = columns.join(",");
+      // const dailyReportImage: DAILY_REPORT_IMAGE = {
+      //   id: key,
+      //   date: date,
+      //   desc: imageDesc,
+      //   url: R2Key,
+      //   created_at: today,
+      //   updated_at: today,
+      // };
+      // const tableName = "daily_report_images";
+      // const insertValues = `("${dailyReportImage.id}", "${dailyReportImage.date}", "${dailyReportImage.desc}", "${dailyReportImage.url}", "${dailyReportImage.created_at}", "${dailyReportImage.updated_at}")`;
+      // const sqlInsert = `INSERT INTO ${tableName} (${columnStr}) VALUES ${insertValues}`;
+
+      // const insertD1Result = await c.env.DB.prepare(sqlInsert).all();
+
+      const dailyReportImage: DailyReportImage = {
         id: key,
         date: date,
         desc: imageDesc,
@@ -168,20 +191,16 @@ app.on(
         created_at: today,
         updated_at: today,
       };
-      const tableName = "daily_report_images";
-      const insertValues = `("${dailyReportImage.id}", "${dailyReportImage.date}", "${dailyReportImage.desc}", "${dailyReportImage.url}", "${dailyReportImage.created_at}", "${dailyReportImage.updated_at}")`;
-      const sqlInsert = `INSERT INTO ${tableName} (${columnStr}) VALUES ${insertValues}`;
+      const results = await insertDailyReportImage(c, dailyReportImage);
 
-      const insertD1Result = await c.env.DB.prepare(sqlInsert).all();
+      // if (!insertD1Result.success) {
+      //   return c.json({
+      //     success: false,
+      //     message: "failed insert daily report image data to d1",
+      //   });
+      // }
 
-      if (!insertD1Result.success) {
-        return c.json({
-          success: false,
-          message: "failed insert daily report image data to d1",
-        });
-      }
-
-      console.log(`success save data to d1`)
+      console.log(`success save data to d1, ${results}`);
       return c.json(
         {
           success: true,
@@ -190,7 +209,6 @@ app.on(
         },
         200
       );
-
     } catch (err) {
       return c.json(
         { success: false, message: `fail post image on ${date}`, err: err },

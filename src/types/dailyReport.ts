@@ -1,17 +1,8 @@
-export type DAILY_REPORT_IMAGE = {
-  id: string;
-  date: string;
-  desc: string;
-  url: string;
-  created_at: string;
-  updated_at: string;
-};
+import {
+  dailyReportImagesTable,
+  dailyReportsTable,
+} from "../db/dailyReportSchema";
 
-export type DAILY_REPORT = {
-  id: string;
-  date: string;
-  title: string;
-  weather_summary: string;
-  created_at: string;
-  updated_at: string;
-};
+export type DailyReportImage = typeof dailyReportImagesTable.$inferInsert;
+
+export type DailyReport = typeof dailyReportsTable.$inferInsert;
