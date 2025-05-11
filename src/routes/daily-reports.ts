@@ -128,7 +128,7 @@ app.on(
       );
     }
 
-    if (typeof imageDesc !== 'string' ) {
+    if (typeof imageDesc !== "string") {
       return c.json(
         { success: false, message: "image_desc is not a string" },
         400
@@ -137,6 +137,7 @@ app.on(
 
     try {
       // save image to r2
+
       const fileBuffer = await imageFile.arrayBuffer();
       const fileName = imageFile.name;
       const ext = fileName.split(".").pop();
@@ -152,17 +153,13 @@ app.on(
       }
 
       const { key: R2Key } = putR2Result;
-
-      // const uploadUrl = `https://${appBaseUrl}/api/images/upload/${key}`;
+      console.log(`success put image to r2, ${R2Key}`);
 
       // save data to d1
-
       // prepare sql
+      const today = dayjs().format("YYYY-MM-DD");
       const columns = ["id", "date", "desc", "url", "created_at", "updated_at"];
       const columnStr = columns.join(",");
-      const tableName = "daily_report_images";
-      const insertValues = `()`;
-      const today = dayjs().format("YYYY-MM-DD");
       const dailyReportImage: DAILY_REPORT_IMAGE = {
         id: key,
         date: date,
@@ -171,6 +168,8 @@ app.on(
         created_at: today,
         updated_at: today,
       };
+      const tableName = "daily_report_images";
+      const insertValues = `("${dailyReportImage.id}", "${dailyReportImage.date}", "${dailyReportImage.desc}", "${dailyReportImage.url}", "${dailyReportImage.created_at}", "${dailyReportImage.updated_at}")`;
       const sqlInsert = `INSERT INTO ${tableName} (${columnStr}) VALUES ${insertValues}`;
 
       const insertD1Result = await c.env.DB.prepare(sqlInsert).all();
@@ -181,6 +180,8 @@ app.on(
           message: "failed insert daily report image data to d1",
         });
       }
+
+      console.log(`success save data to d1`)
       return c.json(
         {
           success: true,
@@ -189,6 +190,7 @@ app.on(
         },
         200
       );
+
     } catch (err) {
       return c.json(
         { success: false, message: `fail post image on ${date}`, err: err },

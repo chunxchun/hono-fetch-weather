@@ -3,7 +3,13 @@
   "scripts": {
     "dev": "wrangler dev",
     "deploy": "wrangler deploy --minify",
-    "cf-typegen": "wrangler types --env-interface CloudflareBindings"
+    "cf-typegen": "wrangler types --env-interface CloudflareBindings",
+    "init-remote-weather-database": "npx wrangler d1 execute d1-demo --remote --file=./src/db/weatherSchema.sql",
+    "init-remote-daily-report-database": "npx wrangler d1 execute d1-demo --remote --file=./src/db/dailyReportSchema.sql",
+    "init-remote-database": "pnpm run init-remote-weather-database && pnpm run init-remote-daily-report-database",
+    "init-local-weather-database": "npx wrangler d1 execute d1-demo --local --file=./src/db/weatherSchema.sql",
+    "init-local-daily-report-database": "npx wrangler d1 execute d1-demo --local --file=./src/db/dailyReportSchema.sql",
+    "init-local-database": "pnpm run init-local-weather-database && pnpm run init-local-daily-report-database"
   },
   "dependencies": {
     "@types/node": "^22.14.1",
