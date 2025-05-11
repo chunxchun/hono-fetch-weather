@@ -22,7 +22,7 @@ const app = new Hono<{ Bindings: CloudflareBindings }>()
 
 initialize database, test locally
 ```txt
-npx wrangler d1 execute [DB] --local --file=./schema.sql
+npx wrangler d1 execute [DB] --remote/--local --file=[schema]
 ```
 
 list tables

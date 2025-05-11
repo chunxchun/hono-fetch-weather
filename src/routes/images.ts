@@ -4,8 +4,9 @@ import { v4 as uuidv4 } from "uuid";
 
 const app = new Hono<{ Bindings: Bindings }>();
 
-app.post("/upload", async (c) => {
-  const key = uuidv4();
+app.post("/upload/:key", async (c) => {
+
+  const key = c.req.param('key') || uuidv4();
   const formData = await c.req.parseBody();
   const imageFile = formData["image_file"];
 
@@ -26,11 +27,10 @@ app.post("/upload", async (c) => {
     const fileName = imageFile.name;
     const ext = fileName.split(".").pop();
     const path = `${key}.${ext}`;
-    console.log(fileName, ext, path);
+    // console.log(fileName, ext, path);
+    const result = await c.env.BUCKET.put(path, fileBuffer);
 
-    await c.env.BUCKET.put(path, fileBuffer);
-
-    return c.json({ msg: "Image file saved to R2", imageUrl: path }, 200);
+    return c.json({ success: true, message: "Image file saved to R2", result: result }, 200);
   } catch (err) {
     return c.json({ err: err }, 400);
   }

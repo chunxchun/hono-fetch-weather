@@ -320,6 +320,10 @@ app.get('/heat_stress_work_warnings/:yyyy/:mm/:dd', async (c) => {
   }
 })
 
+app.post('/heat_stress_work_warnings/:yyyy/:mm/:dd', async (c) => {
+  
+})
+
 
 // get the weather press hourly reading content from d1
 app.get("/hourly_readings/:id", async (c) => {
@@ -493,11 +497,12 @@ app.get('/hourly_readings/:yyyy/:mm/:dd', async (c) => {
   } catch (err) {
     return c.json({
       success: false,
-      message: `fetch ${date} hourly readings failed`,
+      message: `fetch d1 ${date} hourly readings failed`,
       err: err,
     });
   }
 })
+
 
 
 export default app;
