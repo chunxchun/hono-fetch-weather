@@ -1,6 +1,13 @@
 import { Hono } from "hono";
 import { Bindings } from "../config";
 import { v4 as uuidv4 } from "uuid";
+import {
+  failedResponse,
+  getErrorMessage,
+  successResponse,
+  validateFormDateImageFile,
+} from "../lib/helpers";
+import { putFileToR2 } from "../lib/storage";
 
 const app = new Hono<{ Bindings: Bindings }>();
 
@@ -32,45 +39,13 @@ app.on("POST", ["/upload", "/upload/", "/upload/:key"], async (c) => {
   const formData = await c.req.parseBody();
   const imageFile = formData["image_file"];
 
-  if (!imageFile) {
-    return c.json(
-      { success: false, message: `no image_file from form data` },
-      400
-    );
-  }
-
-  if (!(imageFile instanceof File)) {
-    return c.json(
-      { success: false, message: "image_file is not a valid file" },
-      400
-    );
-  }
-
-  const acceptedImageTypes = ["image/jpg", "image/jpeg", "image/png"];
-  
-  if (!acceptedImageTypes.includes(imageFile.type)) {
-    return c.json(
-      { success: false, message: "image_file is not of image type" },
-      400
-    );
-  }
-
   try {
-    const fileBuffer = await imageFile.arrayBuffer();
-    const fileName = imageFile.name;
-    const ext = fileName.split(".").pop();
-    const path = `${key}.${ext}`;
-    const result = await c.env.BUCKET.put(`images/${path}`, fileBuffer);
-
-    return c.json(
-      { success: true, message: `success upload images file to R2`, result: result },
-      200
-    );
+    const validatedImageFile = validateFormDateImageFile(c, imageFile);
+    const folder = "images";
+    const result = await putFileToR2(c, validatedImageFile, key, folder);
+    return successResponse(c, `success post image`, result);
   } catch (err) {
-    return c.json(
-      { success: false, message: `fail upload image to R2`, err: err },
-      400
-    );
+    return failedResponse(c, `failed post image`, getErrorMessage(err));
   }
 });
 
