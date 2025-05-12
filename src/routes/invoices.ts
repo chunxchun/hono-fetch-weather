@@ -37,7 +37,6 @@ app.get("/html", async (c) => {
 });
 
 app.post("/docx", async (c) => {
- 
   const body = await c.req.parseBody();
   const docxDataStr = body["docxData"];
 
@@ -52,26 +51,35 @@ app.post("/docx", async (c) => {
     return c.json({ success: false, message: `document data error` }, 400);
   }
 
-  const docxData = JSON.parse(docxDataStr) as DOCX_DATA;
+  console.log(`before parse, ${docxDataStr}`);
+  const data = (await JSON.parse(docxDataStr)) as DOCX_DATA;
+  console.log(`after parse, ${data}`);
+  console.log(typeof data);
+  console.log(typeof data.title);
+  console.log(typeof data.images);
 
+  console.log(docxData)
   try {
     const docBuffer = await generateDocx(docxData, c);
 
-    try {
-      const docId = uuidv4();
-      const path = `./docx/${docId}.docx`;
-      const result = await c.env.BUCKET.put(path, docBuffer);
-      console.log("Successfully uploaded to R2 bucket");
-      return c.json({
-        success: true,
-        message: `doc saved to ${path}`,
-        result: result,
-      });
-    } catch (err) {
-      return c.json({ error: "Failed to upload document to storage" }, 500);
-    }
+    const docId = uuidv4();
+    const path = `docx/${docId}.docx`;
+    const result = await c.env.BUCKET.put(path, docBuffer);
+    console.log("Successfully uploaded to R2 bucket");
+
+    return c.json({
+      success: true,
+      message: `doc saved to ${path}`,
+      result: result,
+    });
   } catch (err) {
-    return c.json({ err: err });
+    return c.json(
+      {
+        success: false,
+        message: `failed to upload document to R1, ${err}`,
+      },
+      500
+    );
   }
 });
 
