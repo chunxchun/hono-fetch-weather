@@ -10,6 +10,7 @@ import {
   Bindings,
   reactAppDomain,
   reactDemoAppDomain,
+  quotationAppDomain,
   bearerToken,
 } from "./config";
 
@@ -22,7 +23,7 @@ import dailyReportsRoute from "./routes/daily-reports";
 
 const app = new Hono<{ Bindings: Bindings }>();
 
-const allowedOrigin = [reactDemoAppDomain, reactAppDomain];
+const allowedOrigin = [reactDemoAppDomain, reactAppDomain, quotationAppDomain];
 
 app.use(
   "*",

@@ -2,19 +2,22 @@
 //   const date.split('-')
 //   const date = `${yyyy}-${mm}-${dd}`;
 
+import dayjs from "dayjs";
 import { Context } from "hono";
 
-//   if (!yyyy || !mm || !dd) {
-//     return c.json({ succss: false, message: `enter a valid date` }, 400);
-//   }
+export const validateDate = (yyyy: string, mm: string, dd: string) => {
+  if (!yyyy || !mm || !dd) {
+    throw new Error(`not a valid date`);
+  }
 
-//   if (!dayjs(date, "YYYY-MM-DD", true).isValid()) {
-//     return c.json(
-//       { succss: false, message: `${date} is not a valid date` },
-//       400
-//     );
-//   }
-// };
+  const date = `${yyyy}-${mm}-${dd}`;
+
+  if (!dayjs(date, "YYYY-MM-DD", true).isValid()) {
+    throw new Error(`${date} is not a valid date`);
+  }
+
+  return date;
+};
 
 // export const validateImageFile = (image) => {}
 
@@ -39,7 +42,7 @@ export const validateFormDateImageFile = (c: Context, data: string | File) => {
     throw new Error(`image file is not of image type`);
     // return failedResponse(c, `image_file is not of image type`);
   }
-  
+
   return data as File;
 };
 

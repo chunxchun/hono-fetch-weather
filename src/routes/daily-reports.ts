@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { appBaseUrl, BearerAuthHeader, bearerToken, Bindings } from "../config";
+import { Bindings } from "../config";
 import dayjs from "dayjs";
 import { v4 as uuidv4 } from "uuid";
 import type { DailyReportImage } from "../types/dailyReport";
@@ -14,7 +14,11 @@ app.get("/images/:id", async (c) => {
   const { id } = c.req.param();
 
   try {
-    return c.json({ success: true, message: `` }, 200);
+    
+    return c.json(
+      { success: true, message: `success get daily report image ${id}` },
+      200
+    );
   } catch (err) {
     return c.json({
       success: false,

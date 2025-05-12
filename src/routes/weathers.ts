@@ -11,59 +11,39 @@ import type {
   HourlyReading,
   HeatStressWorkWarning,
 } from "../types/weather";
+import { failedResponse, successResponse, validateDate } from "../lib/helpers";
 
 const app = new Hono<{ Bindings: Bindings }>();
 
 app.get("/", async (c) => {
-  return c.json(
-    { success: true, message: "fetch weather routes success" },
-    200
-  );
+  return successResponse(c, `get weather routes success`);
 });
 
 // get all weather press links of a particular day from d1
 app.get("/press_links/:yyyy/:mm/:dd", async (c) => {
   const { yyyy, mm, dd } = c.req.param();
-  const date = `${yyyy}-${mm}-${dd}`;
 
-  if (!yyyy || !mm || !dd) {
-    return c.json({ succss: false, message: `enter a valid date` }, 400);
-  }
-  // dayjs('2022-01-33').isValid();
-  // true, parsed to 2022-02-02
-  if (!dayjs(date, "YYYY-MM-DD", true).isValid()) {
-    return c.json(
-      { succss: false, message: `${date} is not a valid date` },
-      400
-    );
-  }
-  // return c.json({ date: `${date}` });
   try {
+    const validatedDate = validateDate(yyyy, mm, dd);
+
     // fetch database
     const table = "press_links";
     const sqlQuery = `SELECT * FROM ${table} WHERE press_release_date = ?`;
     const { success, results } = await c.env.DB.prepare(sqlQuery)
-      .bind(date)
+      .bind(validatedDate)
       .all();
 
     if (!success) {
-      return c.json(
-        { success: false, message: `fetch d1 press links failed` },
-        400
-      );
+      return failedResponse(c, `fetch d1 press links failed`);
     }
 
-    return c.json({
-      success: true,
-      message: `fetch d1 ${date} press links success`,
-      results: results,
-    });
+    return successResponse(
+      c,
+      `success get d1 ${validatedDate} press links`,
+      results
+    );
   } catch (err) {
-    return c.json({
-      success: false,
-      message: `fetch ${date} press links failed`,
-      err: err,
-    });
+    return failedResponse(c, `failed get d1 press links`);
   }
 });
 
@@ -181,14 +161,20 @@ app.post("/heat_stress_work_warnings/:id/:url", async (c) => {
 
   if (!id) {
     return c.json(
-      { success: false, message: "enter a valid id for heat stress work warning" },
+      {
+        success: false,
+        message: "enter a valid id for heat stress work warning",
+      },
       400
     );
   }
 
   if (!url) {
     return c.json(
-      { success: false, message: "enter a valid url for heat stress work warning" },
+      {
+        success: false,
+        message: "enter a valid url for heat stress work warning",
+      },
       400
     );
   }

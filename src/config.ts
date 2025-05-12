@@ -9,10 +9,13 @@ const projectName = "hono-fetch-weather";
 const workersBaseUrl = "find2meals.workers.dev";
 const reactDemoAppBaseUrl = "cf-react-demo-app";
 const reactAppBaseUrl = "cf-react-app";
-
+const quotationAppBaseUrl = "quotation-app";
 export const appBaseUrl = `${projectName}.${workersBaseUrl}`;
 export const weatherBaseUrl = "https://www.info.gov.hk/gia/wr";
 export const bearerToken = "joerogan";
-export const BearerAuthHeader = { headers: `Authorization: Bearer ${bearerToken}`};
+export const BearerAuthHeader = {
+  headers: `Authorization: Bearer ${bearerToken}`,
+};
 export const reactDemoAppDomain = `https://${reactDemoAppBaseUrl}.${workersBaseUrl}`;
 export const reactAppDomain = `https://${reactAppBaseUrl}.${workersBaseUrl}`;
+export const quotationAppDomain = `https://${quotationAppBaseUrl}.${workersBaseUrl}`;
