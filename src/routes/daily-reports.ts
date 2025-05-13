@@ -7,6 +7,7 @@ import { drizzle } from "drizzle-orm/d1";
 import { dailyReportImagesTable } from "../db/dailyReportSchema";
 import { eq } from "drizzle-orm";
 import { insertDailyReportImage } from "../lib/database";
+import { validateFormDataString } from "../lib/helpers";
 
 const app = new Hono<{ Bindings: Bindings }>();
 
@@ -14,7 +15,6 @@ app.get("/images/:id", async (c) => {
   const { id } = c.req.param();
 
   try {
-    
     return c.json(
       { success: true, message: `success get daily report image ${id}` },
       200
@@ -109,6 +109,25 @@ app.on(
     const formData = await c.req.parseBody();
     const imageFile = formData["image_file"];
 
+    const imageDesc = formData["image_desc"]
+      ? validateFormDataString(formData["image_desc"])
+      : "";
+    const building = formData["building"]
+      ? validateFormDataString(formData["building"])
+      : "";
+    const level = formData["level"]
+      ? validateFormDataString(formData["level"])
+      : "";
+    const location = formData["location"]
+      ? validateFormDataString(formData["location"])
+      : "";
+    const substrate = formData["substrate"]
+      ? validateFormDataString(formData["substrate"])
+      : "";
+    const work = formData["work"]
+      ? validateFormDataString(formData["work"])
+      : "";
+
     if (!imageFile) {
       return c.json(
         { success: false, message: `no image_file from form data` },
@@ -132,22 +151,7 @@ app.on(
       );
     }
 
-    const imageDesc = formData["image_desc"];
-
-    if (!imageDesc) {
-      return c.json(
-        { success: false, message: `no image_desc from form data` },
-        400
-      );
-    }
-
-    if (typeof imageDesc !== "string") {
-      return c.json(
-        { success: false, message: "image_desc is not a string" },
-        400
-      );
-    }
-
+    
     try {
       // save image to r2
 
@@ -192,6 +196,11 @@ app.on(
         date: date,
         desc: imageDesc,
         url: R2Key,
+        building: building,
+        level: level,
+        location: location,
+        substrate: substrate,
+        work: work,
         created_at: today,
         updated_at: today,
       };

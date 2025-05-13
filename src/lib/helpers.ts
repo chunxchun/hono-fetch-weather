@@ -21,7 +21,12 @@ export const validateDate = (yyyy: string, mm: string, dd: string) => {
 
 // export const validateImageFile = (image) => {}
 
-export const validateFormDataString = (data: string) => {};
+export const validateFormDataString = (data: string|File) => {
+  if (data instanceof File) {
+    throw new Error(`form data type error`)
+  }
+  return data as string;
+};
 
 export const ValidateFormDataFile = (data: File) => {};
 
