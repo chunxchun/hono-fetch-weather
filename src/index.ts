@@ -2,37 +2,42 @@ import { Hono } from "hono";
 import { bearerAuth } from "hono/bearer-auth";
 import { cors } from "hono/cors";
 
-import { v4 as uuidv4 } from "uuid";
-import { drizzle } from "drizzle-orm/d1";
-import { uuid } from "drizzle-orm/gel-core";
-
 import {
+  bearerToken,
   Bindings,
+  quotationAppDomain,
   reactAppDomain,
   reactDemoAppDomain,
-  quotationAppDomain,
-  bearerToken,
 } from "./config";
 
 // routes
-import testsRoute from "./routes/tests";
-import invoicesRoute from "./routes/invoices";
-import imagesRoute from "./routes/images";
-import weathersRoute from "./routes/weathers";
 import dailyReportsRoute from "./routes/daily-reports";
+import imagesRoute from "./routes/images";
+import invoicesRoute from "./routes/invoices";
+import testsRoute from "./routes/tests";
+import weathersRoute from "./routes/weathers";
 
 const app = new Hono<{ Bindings: Bindings }>();
 
 const allowedOrigin = [reactDemoAppDomain, reactAppDomain, quotationAppDomain];
-
-app.use(
-  "*",
-  cors({
-    origin: ["http://localhost:5173", ...allowedOrigin],
-    allowMethods: ["GET", "POST"],
-    allowHeaders: ["Authorization"],
-  })
-);
+const apiCors = {
+  origin: ["http://localhost:5173", ...allowedOrigin],
+  // origin: "*",
+  allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowHeaders: [
+    "Origin",
+    "Authorization",
+    "Content-Type",
+    "Accept",
+    "Content-Type",
+    "X-Requested-With",
+    "x-client-key",
+    "x-client-token",
+    "x-client-secret",
+  ],
+  // credentials: true
+};
+app.use('/api/*', cors());
 app.use("*", bearerAuth({ token: bearerToken }));
 
 app.get("/", (c) => c.json({ name: "Hello Hono!" }, 200));

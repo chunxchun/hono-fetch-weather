@@ -127,7 +127,7 @@ app.on(
     const work = formData["work"]
       ? validateFormDataString(formData["work"])
       : "";
-
+    console.log(location, substrate, work);
     if (!imageFile) {
       return c.json(
         { success: false, message: `no image_file from form data` },
@@ -151,7 +151,6 @@ app.on(
       );
     }
 
-    
     try {
       // save image to r2
 
