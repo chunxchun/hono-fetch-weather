@@ -5,10 +5,11 @@ import { successResponse } from "../lib/helpers";
 const app = new Hono<{ Bindings: Bindings }>();
 
 app.post("/form-data", async (c) => {
-
-
-
-
+  const formData = await c.req.parseBody();
+  console.log(`got form data: ${formData['image_file']}`)
+  console.log(`got form data: ${formData['level']}`)
+  console.log(`got form data: ${formData['location']}`)
+  return c.json({ success: true, message: `your form data ${formData['building']}`})
 });
 
 app.post("/", async (c) => {

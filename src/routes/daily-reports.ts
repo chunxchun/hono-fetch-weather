@@ -94,7 +94,7 @@ app.on(
     const { yyyy, mm, dd } = c.req.param();
 
     if (!yyyy || !mm || !dd) {
-      return c.json({ succss: false, message: `enter a valid date` }, 400);
+      return c.json({ success: false, message: `enter a valid date` }, 400);
     }
 
     const date = `${yyyy}-${mm}-${dd}`;
@@ -106,11 +106,17 @@ app.on(
       );
     }
 
+    // console.log(`post daily image date ${date}`);
+
     const formData = await c.req.parseBody();
+
     const imageFile = formData["image_file"];
 
     const imageDesc = formData["image_desc"]
       ? validateFormDataString(formData["image_desc"])
+      : "";
+    const reportDate = formData["report_date"]
+      ? validateFormDataString(formData["report_date"])
       : "";
     const building = formData["building"]
       ? validateFormDataString(formData["building"])
@@ -150,7 +156,7 @@ app.on(
         400
       );
     }
-
+    console.log("passed guade clause");
     try {
       // save image to r2
 
@@ -174,22 +180,20 @@ app.on(
       // save data to d1
       // prepare sql
       const today = dayjs().format("YYYY-MM-DD");
-      // const columns = ["id", "date", "desc", "url", "created_at", "updated_at"];
+      const columns = [
+        "id",
+        "date",
+        "desc",
+        "url",
+        "building",
+        "level",
+        "location",
+        "substrate",
+        "work",
+        "created_at",
+        "updated_at",
+      ];
       // const columnStr = columns.join(",");
-      // const dailyReportImage: DAILY_REPORT_IMAGE = {
-      //   id: key,
-      //   date: date,
-      //   desc: imageDesc,
-      //   url: R2Key,
-      //   created_at: today,
-      //   updated_at: today,
-      // };
-      // const tableName = "daily_report_images";
-      // const insertValues = `("${dailyReportImage.id}", "${dailyReportImage.date}", "${dailyReportImage.desc}", "${dailyReportImage.url}", "${dailyReportImage.created_at}", "${dailyReportImage.updated_at}")`;
-      // const sqlInsert = `INSERT INTO ${tableName} (${columnStr}) VALUES ${insertValues}`;
-
-      // const insertD1Result = await c.env.DB.prepare(sqlInsert).all();
-
       const dailyReportImage: DailyReportImage = {
         id: key,
         date: date,
@@ -203,7 +207,12 @@ app.on(
         created_at: today,
         updated_at: today,
       };
-      const results = await insertDailyReportImage(c, dailyReportImage);
+      // const tableName = "daily_report_images";
+      // const insertValues = `("${dailyReportImage.id}", "${dailyReportImage.date}", "${dailyReportImage.desc}", "${dailyReportImage.url}", "${dailyReportImage.building}", "${dailyReportImage.level}", "${dailyReportImage.location}", "${dailyReportImage.substrate}", "${dailyReportImage.work}", "${dailyReportImage.created_at}", "${dailyReportImage.updated_at}")`;
+      // const sqlInsert = `INSERT INTO ${tableName} (${columnStr}) VALUES ${insertValues}`;
+
+      console.log(`before insert, ${JSON.stringify(dailyReportImage, null, 2)}`);
+      // const insertD1Result = await c.env.DB.prepare(sqlInsert).all();
 
       // if (!insertD1Result.success) {
       //   return c.json({
@@ -212,6 +221,7 @@ app.on(
       //   });
       // }
 
+      const results = await insertDailyReportImage(c, dailyReportImage);
       console.log(`success save data to d1, ${results}`);
       return c.json(
         {
