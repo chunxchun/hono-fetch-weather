@@ -4,6 +4,11 @@ import { successResponse } from "../lib/helpers";
 
 const app = new Hono<{ Bindings: Bindings }>();
 
+app.get('/r2/:key', async (c) => {
+
+})
+
+
 app.post("/form-data", async (c) => {
   const formData = await c.req.parseBody();
   console.log(`got form data: ${formData['image_file']}`)

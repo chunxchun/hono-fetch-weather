@@ -11,19 +11,19 @@ const docxData: DOCX_DATA = {
     {
       id: "1",
       num: "1",
-      url: "https://placehold.co/600x400",
+      url: "https://placehold.co/600x400/png",
       desc: "600x400 image",
     },
     {
       id: "2",
       num: "2",
-      url: "https://placehold.co/300x200",
+      url: "https://placehold.co/300x200/png",
       desc: "300x200 image",
     },
     {
       id: "3",
       num: "3",
-      url: "https://placehold.co/150x100",
+      url: "https://placehold.co/150x100/png",
       desc: "150x100 image",
     },
   ],
@@ -31,36 +31,18 @@ const docxData: DOCX_DATA = {
 
 app.get("/html", async (c) => {
   try {
+    return c.json({ success: true, message: `success generate html` }, 200);
   } catch (err) {
-    return c.json({ err: err });
+    return c.json({ err: err }, 400);
   }
 });
 
 app.post("/docx", async (c) => {
-  const body = await c.req.parseBody();
-  const docxDataStr = body["docxData"];
+  const body = await c.req.json();
+  console.log("docx json", body);
 
-  if (docxDataStr instanceof File) {
-    return c.json(
-      { success: false, message: `document data should be string` },
-      400
-    );
-  }
-
-  if (typeof docxDataStr !== "string") {
-    return c.json({ success: false, message: `document data error` }, 400);
-  }
-
-  console.log(`before parse, ${docxDataStr}`);
-  const data = (await JSON.parse(docxDataStr)) as DOCX_DATA;
-  console.log(`after parse, ${data}`);
-  console.log(typeof data);
-  console.log(typeof data.title);
-  console.log(typeof data.images);
-
-  console.log(docxData)
   try {
-    const docBuffer = await generateDocx(docxData, c);
+    const docBuffer = await generateDocx(body);
 
     const docId = uuidv4();
     const path = `docx/${docId}.docx`;

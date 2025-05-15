@@ -1,9 +1,11 @@
-import { sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
 export const dailyReportImagesTable = sqliteTable("daily_report_images", {
   id: text().primaryKey(),
   date: text().notNull(),
   desc: text().notNull(),
+  width: integer().notNull(),
+  height: integer().notNull(),
   url: text().notNull(),
   building: text().notNull(),
   level: text().notNull(),

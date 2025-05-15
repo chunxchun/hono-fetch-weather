@@ -11,21 +11,21 @@ import { validateFormDataString } from "../lib/helpers";
 
 const app = new Hono<{ Bindings: Bindings }>();
 
-app.get("/images/:id", async (c) => {
-  const { id } = c.req.param();
+// app.get("/images/:id", async (c) => {
+//   const { id } = c.req.param();
 
-  try {
-    return c.json(
-      { success: true, message: `success get daily report image ${id}` },
-      200
-    );
-  } catch (err) {
-    return c.json({
-      success: false,
-      message: `failed get daily report image ${id}`,
-    });
-  }
-});
+//   try {
+//     return c.json(
+//       { success: true, message: `success get daily report image ${id}` },
+//       200
+//     );
+//   } catch (err) {
+//     return c.json({
+//       success: false,
+//       message: `failed get daily report image ${id}`,
+//     });
+//   }
+// });
 
 app.get("/images/:yyyy/:mm/:dd", async (c) => {
   const { yyyy, mm, dd } = c.req.param();
@@ -115,6 +115,13 @@ app.on(
     const imageDesc = formData["image_desc"]
       ? validateFormDataString(formData["image_desc"])
       : "";
+
+    const imageWidth = formData["image_width"]
+      ? validateFormDataString(formData["image_width"])
+      : "0";
+    const imageHeight = formData["image_height"]
+      ? validateFormDataString(formData["image_height"])
+      : "0";
     const reportDate = formData["report_date"]
       ? validateFormDataString(formData["report_date"])
       : "";
@@ -180,24 +187,26 @@ app.on(
       // save data to d1
       // prepare sql
       const today = dayjs().format("YYYY-MM-DD");
-      const columns = [
-        "id",
-        "date",
-        "desc",
-        "url",
-        "building",
-        "level",
-        "location",
-        "substrate",
-        "work",
-        "created_at",
-        "updated_at",
-      ];
+      // const columns = [
+      //   "id",
+      //   "date",
+      //   "desc",
+      //   "url",
+      //   "building",
+      //   "level",
+      //   "location",
+      //   "substrate",
+      //   "work",
+      //   "created_at",
+      //   "updated_at",
+      // ];
       // const columnStr = columns.join(",");
       const dailyReportImage: DailyReportImage = {
         id: key,
         date: date,
         desc: imageDesc,
+        width: parseInt(imageWidth),
+        height: parseInt(imageHeight),
         url: R2Key,
         building: building,
         level: level,
@@ -211,7 +220,9 @@ app.on(
       // const insertValues = `("${dailyReportImage.id}", "${dailyReportImage.date}", "${dailyReportImage.desc}", "${dailyReportImage.url}", "${dailyReportImage.building}", "${dailyReportImage.level}", "${dailyReportImage.location}", "${dailyReportImage.substrate}", "${dailyReportImage.work}", "${dailyReportImage.created_at}", "${dailyReportImage.updated_at}")`;
       // const sqlInsert = `INSERT INTO ${tableName} (${columnStr}) VALUES ${insertValues}`;
 
-      console.log(`before insert, ${JSON.stringify(dailyReportImage, null, 2)}`);
+      console.log(
+        `before insert, ${JSON.stringify(dailyReportImage, null, 2)}`
+      );
       // const insertD1Result = await c.env.DB.prepare(sqlInsert).all();
 
       // if (!insertD1Result.success) {
