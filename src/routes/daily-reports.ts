@@ -255,16 +255,25 @@ app.on(
 
 app.delete("/images/:key", async (c) => {
   const { key } = c.req.param();
-  console.log(`delete image ${key}`)
+  console.log(`delete image ${key}`);
+
   try {
     // check R2
     const deleteR2Result = await c.env.BUCKET.delete(key);
-    console.log('delete r2', deleteR2Result)
+    // console.log("delete r2", deleteR2Result);
     // check D1
     const deleteD1Result = await deleteDailyReportImageByUrl(c, key);
-    console.log('delete d1', deleteD1Result)
+    // console.log("delete d1", deleteD1Result);
+    return c.json({
+      success: true,
+      message: `success remove daily report image ${key}`,
+    });
   } catch (err) {
-    throw err;
+    return c.json({
+      success: false,
+      message: `fail delete image`,
+      err: err,
+    });
   }
 });
 
