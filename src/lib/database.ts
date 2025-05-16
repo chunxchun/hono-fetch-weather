@@ -18,6 +18,17 @@ import {
 } from "../db/weatherSchema";
 import { eq } from "drizzle-orm";
 
+export const deleteDailyReportImageByUrl = async (
+  c: Context<{ Bindings: Bindings }>,
+  url: string
+) => {
+  const db = drizzle(c.env.DB);
+  return db
+    .delete(dailyReportImagesTable)
+    .where(eq(dailyReportImagesTable.url, url))
+    .returning();
+};
+
 export const insertDailyReportImage = async (
   c: Context<{ Bindings: Bindings }>,
   dailyReportImage: DailyReportImage
