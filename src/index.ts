@@ -29,11 +29,10 @@ const apiCors = {
     "Authorization",
     "Content-Type",
     "Accept",
-    "Content-Type",
-    "X-Requested-With",
-    "x-client-key",
-    "x-client-token",
-    "x-client-secret",
+    // "X-Requested-With",
+    // "x-client-key",
+    // "x-client-token",
+    // "x-client-secret",
   ],
   // credentials: true
 };

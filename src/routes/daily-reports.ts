@@ -6,7 +6,10 @@ import type { DailyReportImage } from "../types/dailyReport";
 import { drizzle } from "drizzle-orm/d1";
 import { dailyReportImagesTable } from "../db/dailyReportSchema";
 import { eq } from "drizzle-orm";
-import { insertDailyReportImage } from "../lib/database";
+import {
+  deleteDailyReportImageByUrl,
+  insertDailyReportImage,
+} from "../lib/database";
 import { validateFormDataString } from "../lib/helpers";
 
 const app = new Hono<{ Bindings: Bindings }>();
@@ -115,7 +118,6 @@ app.on(
     const imageDesc = formData["image_desc"]
       ? validateFormDataString(formData["image_desc"])
       : "";
-
     const imageWidth = formData["image_width"]
       ? validateFormDataString(formData["image_width"])
       : "0";
@@ -140,7 +142,7 @@ app.on(
     const work = formData["work"]
       ? validateFormDataString(formData["work"])
       : "";
-    console.log(location, substrate, work);
+
     if (!imageFile) {
       return c.json(
         { success: false, message: `no image_file from form data` },
@@ -250,5 +252,20 @@ app.on(
     }
   }
 );
+
+app.delete("/images/:key", async (c) => {
+  const { key } = c.req.param();
+  console.log(`delete image ${key}`)
+  try {
+    // check R2
+    const deleteR2Result = await c.env.BUCKET.delete(key);
+    console.log('delete r2', deleteR2Result)
+    // check D1
+    const deleteD1Result = await deleteDailyReportImageByUrl(c, key);
+    console.log('delete d1', deleteD1Result)
+  } catch (err) {
+    throw err;
+  }
+});
 
 export default app;
