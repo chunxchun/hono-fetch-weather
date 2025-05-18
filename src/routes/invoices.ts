@@ -5,35 +5,29 @@ import { v4 as uuidv4 } from "uuid";
 import { DOCX_DATA } from "../types/docx";
 const app = new Hono<{ Bindings: Bindings }>();
 
-const docxData: DOCX_DATA = {
-  title: "Daily Report",
-  images: [
-    {
-      id: "1",
-      num: "1",
-      url: "https://placehold.co/600x400/png",
-      desc: "600x400 image",
-    },
-    {
-      id: "2",
-      num: "2",
-      url: "https://placehold.co/300x200/png",
-      desc: "300x200 image",
-    },
-    {
-      id: "3",
-      num: "3",
-      url: "https://placehold.co/150x100/png",
-      desc: "150x100 image",
-    },
-  ],
-};
-
 app.get("/html", async (c) => {
   try {
     return c.json({ success: true, message: `success generate html` }, 200);
   } catch (err) {
     return c.json({ err: err }, 400);
+  }
+});
+
+app.get("/docx/:key", async (c) => {
+  try {
+    const { key } = c.req.param();
+    const object = await c.env.BUCKET.get(key);
+    if (object === null) {
+      return c.json({ success: false, message: `object not found` }, 404);
+    }
+    const headers = new Headers();
+    object.writeHttpMetadata(headers);
+    headers.set("etag", object.httpEtag);
+    return new Response(object.body, {
+      headers,
+    });
+  } catch (err) {
+    return c.json({ success: false, message: `fail get document` });
   }
 });
 

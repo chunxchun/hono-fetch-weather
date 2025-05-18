@@ -6,4 +6,23 @@ export type DOCX_IMAGE_DATA = {
   width: number;
   height: number;
 };
-export type DOCX_DATA = { title: string; images: Array<DOCX_IMAGE_DATA> };
+
+export type DOCX_MAN_POWER = {
+  id: string;
+  work_desc: Array<string>;
+  quantity: string;
+  man_count: number;
+  location: string;
+  remarks: string;
+};
+
+export type DOCX_DATA = {
+  title: string;
+  client: string;
+  date: string;
+  weather: string;
+  project: string;
+  location: string;
+  man_power: Array<DOCX_MAN_POWER>;
+  images: Array<DOCX_IMAGE_DATA>;
+};

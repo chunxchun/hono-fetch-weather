@@ -16,7 +16,7 @@ import imagesRoute from "./routes/images";
 import invoicesRoute from "./routes/invoices";
 import testsRoute from "./routes/tests";
 import weathersRoute from "./routes/weathers";
-
+import demoRoute from "./routes/demo";
 const app = new Hono<{ Bindings: Bindings }>();
 
 const allowedOrigin = [reactDemoAppDomain, reactAppDomain, quotationAppDomain];
@@ -36,12 +36,13 @@ const apiCors = {
   ],
   // credentials: true
 };
-app.use('/api/*', cors());
-app.use("*", bearerAuth({ token: bearerToken }));
+app.use("/api/*", cors());
+app.use("/api/*", bearerAuth({ token: bearerToken }));
 
 app.get("/", (c) => c.json({ name: "Hello Hono!" }, 200));
 app.notFound((c) => c.json({ success: false, message: "File not found" }, 404));
 
+app.route("/demo", demoRoute);
 app.route("/api/tests", testsRoute);
 app.route("/api/invoices", invoicesRoute);
 app.route("/api/images", imagesRoute);

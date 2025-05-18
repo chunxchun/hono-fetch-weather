@@ -10,117 +10,130 @@ import {
   TextRun,
 } from "docx";
 
-import { getR2ImageHandler } from "../handlers/getImageHandler";
-import { Context } from "hono";
 import { DOCX_DATA, DOCX_IMAGE_DATA } from "../types/docx";
 const MAX_DIMENSION = 300;
 
-const createTableCell = async (
-  title: string,
+const createTextRun = (
+  text: string,
+  bold: boolean = false,
+  size: number = 24
+) => {
+  return new TextRun({
+    text,
+    bold,
+    size,
+  });
+};
+
+const createImageRun = (
   imageBuffer: ArrayBuffer,
   width: number,
   height: number
 ) => {
   const scale = width > height ? MAX_DIMENSION / width : MAX_DIMENSION / height;
-
-  return new TableCell({
-    children: [
-      new Paragraph({
-        text: title,
-        children: [
-          new ImageRun({
-            data: imageBuffer,
-            type: "png",
-            transformation: { width: width * scale, height: height * scale },
-          }),
-        ],
-      }),
-    ],
+  // console.log("scale", scale, "width", width, "height", height);
+  return new ImageRun({
+    data: imageBuffer,
+    type: "png",
+    transformation: { width: width * scale, height: height * scale },
   });
 };
 
-// const create2x2Table = async (c: Context) => {
-//   const table = new Table({
-//     rows: [
-//       new TableRow({
-//         children: [
-//           await createTableCell(
-//             "1",
-//             Buffer.from(await getR2ImageHandler("sc", c))
-//           ),
-//           await createTableCell(
-//             "2",
-//             Buffer.from(await getR2ImageHandler("sc", c))
-//           ),
-//         ],
-//       }),
-//     ],
-//   });
-//   return table;
-// };
-const createImageTableCell = async (image: DOCX_IMAGE_DATA) => {
+const createImageTableCell = async ({
+  desc,
+  url,
+  width,
+  height,
+}: DOCX_IMAGE_DATA) => {
   try {
-    const resp = await fetch(image.url);
+    const resp = await fetch(url);
     const buffer = await resp.arrayBuffer();
-    const tableCell = await createTableCell(
-      image.desc,
-      buffer,
-      image.width,
-      image.height
-    );
-    return tableCell;
+    return new TableCell({
+      children: [
+        new Paragraph({
+          children: [
+            await createTextRun(desc),
+            await createImageRun(buffer, width, height),
+          ],
+        }),
+      ],
+    });
   } catch (err) {
-    throw new Error(`error create image table cell`);
+    throw err;
   }
 };
-export const generateDocx = async (data: DOCX_DATA) => {
-  const { title, images } = data;
-  console.log(`generate docx title: ${title}, images: ${images}`);
-  
+
+const createEmptyTableCell = () => {
+  return new TableCell({ children: [] });
+};
+
+const createTableRows = async (images: Array<DOCX_IMAGE_DATA>) => {
+  const cellPromises = images.map(async (image) => createImageTableCell(image));
+  const cells = await Promise.all(cellPromises);
+  const tableRows: Array<TableRow> = [];
+  while (cells.length) {
+    cells.length > 1
+      ? tableRows.push(new TableRow({ children: cells.splice(0, 2) }))
+      : tableRows.push(
+          new TableRow({
+            children: [...cells.splice(0, 1), createEmptyTableCell()],
+          })
+        );
+  }
+  return tableRows;
+};
+
+const createTable = async (images: Array<DOCX_IMAGE_DATA>) => {
   try {
-    const imageTableCellResults = images.map((image) =>
-      createImageTableCell(image)
-    );
-    const imageTableCells = await Promise.all(imageTableCellResults);
+    return new Table({
+      rows: await createTableRows(images),
+    });
+  } catch (err) {
+    throw err;
+  }
+};
 
-    // each 2 image table cells forms a new table row
-    const imageTableRows = [];
-    while (imageTableCells.length) {
-      imageTableCells.length > 1
-        ? imageTableRows.push(
-            new TableRow({ children: imageTableCells.splice(0, 2) })
-          )
-        : imageTableRows.push(
-            new TableRow({ children: imageTableCells.splice(0, 1) })
-          );
-    }
-
+const createDoc = async ({ title, images }: DOCX_DATA) => {
+  try {
     const doc = new Document({
       sections: [
         {
           properties: {},
           children: [
-            new Table({
-              rows: imageTableRows,
-            }),
             new Paragraph({
-              children: [
-                new TextRun(title),
-                new TextRun({
-                  text: "Foo Bar",
-                  bold: true,
-                  size: 40,
-                }),
-                new TextRun({
-                  children: [new Tab(), "Github is thee best"],
-                  bold: true,
-                }),
-              ],
+              children: [await createTextRun(title)],
             }),
+            await createTable(images),
           ],
         },
       ],
     });
+    return doc;
+  } catch (err) {
+    throw err;
+  }
+};
+// const createImageTableCell = async (image: DOCX_IMAGE_DATA) => {
+//   try {
+//     const resp = await fetch(image.url);
+//     const buffer = await resp.arrayBuffer();
+//     const tableCell = await createTableCell(
+//       image.desc,
+//       buffer,
+//       image.width,
+//       image.height
+//     );
+//     return tableCell;
+//   } catch (err) {
+//     throw new Error(`error create image table cell`);
+//   }
+// };
+export const generateDocx = async (data: DOCX_DATA) => {
+  try {
+    // const { title, images } = data;
+    // console.log(`generate docx title: ${title}, images: ${images}`);
+
+    const doc = await createDoc(data);
 
     const buffer = await Packer.toBuffer(doc);
     return buffer;
