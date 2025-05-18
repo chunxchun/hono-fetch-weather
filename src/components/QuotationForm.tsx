@@ -1,11 +1,11 @@
-import { FC } from "hono/jsx";
+import type { FC } from "hono/jsx";
+import { Button } from "@/components/ui/button";
 
 export const QuotationForm: FC = () => {
   return (
-    <html>
-      <body>
-        <h1>Form</h1>
-      </body>
-    </html>
+    <>
+      <h1 class="text-3xl underline">Form</h1>
+      <Button variant="outline" >click</Button>
+    </>
   );
 };

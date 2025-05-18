@@ -119,6 +119,10 @@ app.post("/press_links/:yyyy/:mm/:dd", async (c) => {
   }
 });
 
+app.put("/press_links/:yyyy/:mm/:dd", async (c) => {
+  
+})
+
 // get the heat stress work warning content from d1
 app.get("/heat_stress_work_warnings/:id", async (c) => {
   const { id } = c.req.param();

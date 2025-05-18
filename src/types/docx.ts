@@ -15,8 +15,7 @@ export type DOCX_MAN_POWER = {
   location: string;
   remarks: string;
 };
-
-export type DOCX_DATA = {
+export type POST_DOCX_DATA = {
   title: string;
   client: string;
   date: string;
@@ -26,3 +25,10 @@ export type DOCX_DATA = {
   man_power: Array<DOCX_MAN_POWER>;
   images: Array<DOCX_IMAGE_DATA>;
 };
+
+export type LOCAL_DOCX_DATA = {
+  logo: ArrayBuffer;
+  signature: ArrayBuffer;
+};
+
+export type DOCX_DATA = POST_DOCX_DATA & LOCAL_DOCX_DATA;

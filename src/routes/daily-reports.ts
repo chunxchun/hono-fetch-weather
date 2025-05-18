@@ -14,22 +14,6 @@ import { validateFormDataString } from "../lib/helpers";
 
 const app = new Hono<{ Bindings: Bindings }>();
 
-// app.get("/images/:id", async (c) => {
-//   const { id } = c.req.param();
-
-//   try {
-//     return c.json(
-//       { success: true, message: `success get daily report image ${id}` },
-//       200
-//     );
-//   } catch (err) {
-//     return c.json({
-//       success: false,
-//       message: `failed get daily report image ${id}`,
-//     });
-//   }
-// });
-
 app.get("/images/:yyyy/:mm/:dd", async (c) => {
   const { yyyy, mm, dd } = c.req.param();
   const date = `${yyyy}-${mm}-${dd}`;
@@ -47,38 +31,27 @@ app.get("/images/:yyyy/:mm/:dd", async (c) => {
 
   try {
     // fetch database
-    const table = "daily_report_images";
-    // const sqlQuery = `SELECT * FROM ${table} WHERE date = ?`;
 
-    // const { success, results } = await c.env.DB.prepare(sqlQuery)
-    //   .bind(date)
-    //   .all();
     const db = drizzle(c.env.DB);
     const results = await db
       .select()
       .from(dailyReportImagesTable)
       .where(eq(dailyReportImagesTable.date, date));
 
-    // if (!success) {
-    //   return c.json(
-    //     {
-    //       success: false,
-    //       message: `fetch d1 ${date} daily report images failed`,
-    //     },
-    //     400
-    //   );
-    // }
-
-    return c.json({
-      success: true,
-      message: `fetch d1 ${date} daily report images success`,
-      results: results,
-    });
+    return c.json(
+      {
+        success: true,
+        message: `fetch d1 ${date} daily report images success`,
+        results: results,
+      },
+      200
+    );
   } catch (err) {
     return c.json(
       {
         success: false,
         message: `failed get daily report images for date ${date}`,
+        err: JSON.stringify(err),
       },
       400
     );

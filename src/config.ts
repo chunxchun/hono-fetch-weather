@@ -2,6 +2,7 @@ export type Bindings = {
   MY_DOMAIN: KVNamespace;
   DB: D1Database;
   BUCKET: R2Bucket;
+  ASSETS: Fetcher;
   API_KEY: string;
 };
 
@@ -19,3 +20,7 @@ export const BearerAuthHeader = {
 export const reactDemoAppDomain = `https://${reactDemoAppBaseUrl}.${workersBaseUrl}`;
 export const reactAppDomain = `https://${reactAppBaseUrl}.${workersBaseUrl}`;
 export const quotationAppDomain = `https://${quotationAppBaseUrl}.${workersBaseUrl}`;
+
+export const R2_URL = `https://pub-2b0addf01b884fb58892ece1dc10f22d.r2.dev`;
+export const logoUrl = `https://pub-2b0addf01b884fb58892ece1dc10f22d.r2.dev/tong-kee-logo.png`;
+export const signatureUrl = `https://pub-2b0addf01b884fb58892ece1dc10f22d.r2.dev/ww-signature.jpg`;

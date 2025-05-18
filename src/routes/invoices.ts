@@ -1,8 +1,8 @@
 import { Hono } from "hono";
-import { Bindings } from "../config";
+import { Bindings, logoUrl, signatureUrl } from "../config";
 import { generateDocx } from "../lib/genDocx";
 import { v4 as uuidv4 } from "uuid";
-import { DOCX_DATA } from "../types/docx";
+import { DOCX_DATA, LOCAL_DOCX_DATA } from "../types/docx";
 const app = new Hono<{ Bindings: Bindings }>();
 
 app.get("/html", async (c) => {
@@ -36,8 +36,25 @@ app.post("/docx", async (c) => {
   console.log("docx json", body);
 
   try {
-    const docBuffer = await generateDocx(body);
+    console.log(`fetch buffer`);
+    const logo = await fetch(logoUrl);
+    console.log('success fetch logo');
+    const logoBuffer = await logo.arrayBuffer();
+    const signature = await fetch(signatureUrl);
+    const signatureBuffer = await signature.arrayBuffer();
+    console.log(`success fetch buffer`);
+    const localData: LOCAL_DOCX_DATA = {
+      logo: logoBuffer,
+      signature: signatureBuffer,
+    };
+    const data = {
+      ...body,
+      ...localData,
+    } as DOCX_DATA;
 
+    const docBuffer = await generateDocx(data);
+
+    console.log(`doc buffer ready`);
     const docId = uuidv4();
     const path = `docx/${docId}.docx`;
     const result = await c.env.BUCKET.put(path, docBuffer);

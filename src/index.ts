@@ -23,7 +23,7 @@ const allowedOrigin = [reactDemoAppDomain, reactAppDomain, quotationAppDomain];
 const apiCors = {
   origin: ["http://localhost:5173", ...allowedOrigin],
   // origin: "*",
-  allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowMethods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
   allowHeaders: [
     "Origin",
     "Authorization",
