@@ -7,14 +7,15 @@ export type DOCX_IMAGE_DATA = {
   height: number;
 };
 
-export type DOCX_MAN_POWER = {
-  id: string;
+export type DOCX_MAN_POWER_DATA = {
+  // id: string;
   work_desc: Array<string>;
   quantity: string;
   man_count: number;
   location: string;
   remarks: string;
 };
+
 export type POST_DOCX_DATA = {
   title: string;
   client: string;
@@ -22,7 +23,7 @@ export type POST_DOCX_DATA = {
   weather: string;
   project: string;
   location: string;
-  man_power: Array<DOCX_MAN_POWER>;
+  man_powers: Array<DOCX_MAN_POWER_DATA>;
   images: Array<DOCX_IMAGE_DATA>;
 };
 

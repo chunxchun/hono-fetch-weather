@@ -12,7 +12,7 @@ import {
 import { DOCX_DATA, DOCX_IMAGE_DATA } from "../types/docx";
 import { createHeader } from "@/docx/Header";
 import { createFooter } from "@/docx/Footer";
-import { createTable } from "@/docx/Table";
+import { createPhotoTable, createManPowerTable } from "@/docx/Table";
 
 const createDoc = async ({
   logo,
@@ -23,18 +23,22 @@ const createDoc = async ({
   weather,
   project,
   location,
-  man_power,
+  man_powers,
   images,
 }: DOCX_DATA) => {
   console.log("prepare doc");
   const header = createHeader(logo, date, weather);
   console.log(`header ready`);
-  const table = await createTable(images);
-  console.log(`table ready`);
+  const manPowerTable = await createManPowerTable(man_powers);
+  console.log(`man power table ready`);
+  const photoTable = await createPhotoTable(images);
+  console.log(`photo table ready`);
   const footer = createFooter("William Wu", signature);
   console.log(`footer ready`);
 
   try {
+    const total_man_count = man_powers.reduce((acc, cur) => acc += cur.man_count, 0)
+
     const doc = new Document({
       sections: [
         {
@@ -85,7 +89,7 @@ const createDoc = async ({
               children: [
                 new TextRun({ text: `Total MP: `, bold: true, size: 28 }),
                 new TextRun({
-                  text: `3`,
+                  text: total_man_count.toString(),
                   bold: false,
                   size: 28,
                 }),
@@ -101,7 +105,8 @@ const createDoc = async ({
                 }),
               ],
             }),
-            table,
+            manPowerTable,
+            photoTable,
           ],
         },
       ],

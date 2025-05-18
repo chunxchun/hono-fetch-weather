@@ -1,17 +1,6 @@
-import {
-  Document,
-  ImageRun,
-  Packer,
-  Paragraph,
-  Table,
-  TableCell,
-  TableRow,
-  TextRun,
-} from "docx";
-import { DOCX_DATA, DOCX_IMAGE_DATA } from "../types/docx";
-import { createHeader } from "./Header";
-import { createFooter } from "./Footer";
 import { R2_URL } from "@/config";
+import { ImageRun, Paragraph, Table, TableCell, TableRow, TextRun } from "docx";
+import { DOCX_IMAGE_DATA, DOCX_MAN_POWER_DATA } from "../types/docx";
 
 const MAX_DIMENSION = 300;
 
@@ -87,7 +76,56 @@ const createTableRows = async (images: Array<DOCX_IMAGE_DATA>) => {
   return tableRows;
 };
 
-export const createTable = async (images: Array<DOCX_IMAGE_DATA>) => {
+const createTableCell = (text: string) => {
+  return new TableCell({
+    width: {size:100, type: 'pct'},
+    children: [
+      new Paragraph({
+        children: [createTextRun(text)],
+      }),
+    ],
+  });
+};
+
+const createManPowerHeaderRow = () => {
+  return new TableRow({
+    children: [
+      createTableCell("S/N"),
+      createTableCell("Work Description"),
+      createTableCell("Qty"),
+      createTableCell("MP"),
+      createTableCell("Location"),
+      createTableCell("Remarks"),
+    ],
+  });
+};
+
+const createManPowerRow = (idx: number, man_power: DOCX_MAN_POWER_DATA) => {
+  return new TableRow({
+    children: [
+      createTableCell((++idx).toString()),
+      createTableCell(man_power.work_desc.join(", ")),
+      createTableCell(man_power.quantity),
+      createTableCell(man_power.man_count.toString()),
+      createTableCell(man_power.location),
+      createTableCell(man_power.remarks),
+    ],
+  });
+};
+
+export const createManPowerTable = async (
+  man_powers: Array<DOCX_MAN_POWER_DATA>
+) => {
+  const manPowerRows = man_powers.map((man_power, idx) =>
+    createManPowerRow(idx, man_power)
+  );
+  return new Table({
+    columnWidths: [500, 4500, 500, 500, 1500, 1500],
+    rows: [createManPowerHeaderRow(), ...manPowerRows],
+  });
+};
+
+export const createPhotoTable = async (images: Array<DOCX_IMAGE_DATA>) => {
   try {
     return new Table({
       rows: await createTableRows(images),
