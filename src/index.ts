@@ -21,7 +21,7 @@ const app = new Hono<{ Bindings: Bindings }>();
 
 const allowedOrigin = [reactDemoAppDomain, reactAppDomain, quotationAppDomain];
 const apiCors = {
-  origin: ["http://localhost:5173", ...allowedOrigin],
+  origin: ["http://localhost:5173", "http://localhost:8787", ...allowedOrigin],
   // origin: "*",
   allowMethods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
   allowHeaders: [

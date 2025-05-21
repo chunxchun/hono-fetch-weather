@@ -46,9 +46,9 @@ CREATE TABLE
   IF NOT EXISTS "daily_summaries" (
     "id" text PRIMARY KEY,
     "date" text NOT NULL,
-    "min_temperature" text NOT NULL,
-    "max_temperatutre" text NOT NULL,
-    "min_humidity" text NOT NULL,
-    "max_humidity" text NOT NULL,
+    "min_temperature" integer NOT NULL,
+    "max_temperature" integer NOT NULL,
+    "min_humidity" integer NOT NULL,
+    "max_humidity" integer NOT NULL,
     UNIQUE (date)
   );

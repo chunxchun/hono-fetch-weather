@@ -56,7 +56,7 @@ export const insertD1 = async (data: string, path: string, id: string) => {};
 export const successResponse = (
   c: Context,
   message: string,
-  results: any = null
+  results: unknown = null
 ) => {
   return results === null
     ? c.json({ success: true, message }, 200)

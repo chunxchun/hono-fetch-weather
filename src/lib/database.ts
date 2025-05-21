@@ -83,6 +83,16 @@ export const insertPressLink = async (
   return db.insert(pressLinksTable).values(pressLink).returning();
 };
 
+export const selectPressLinkByDate = async (
+  c: Context<{ Bindings: Bindings }>,
+  date: string
+) => {
+  const db = drizzle(c.env.DB);
+  return db
+    .select()
+    .from(pressLinksTable)
+    .where(eq(pressLinksTable.press_release_date, date));
+};
 // hourly reading
 
 export const insertHourlyReading = async (
@@ -93,6 +103,16 @@ export const insertHourlyReading = async (
   return db.insert(hourlyReadingsTable).values(hourlyReading).returning();
 };
 
+export const selectHourlyReportByDate = async (
+  c: Context<{ Bindings: Bindings }>,
+  date: string
+) => {
+  const db = drizzle(c.env.DB);
+  return db
+    .select()
+    .from(hourlyReadingsTable)
+    .where(eq(hourlyReadingsTable.report_date, date));
+};
 // heat stress work warning
 
 export const insertHeatStressWorkWarning = async (
@@ -106,22 +126,39 @@ export const insertHeatStressWorkWarning = async (
     .returning();
 };
 
+export const selectHeatStressWorkWarningByDate = async (
+  c: Context<{ Bindings: Bindings }>,
+  date: string
+) => {
+  const db = drizzle(c.env.DB);
+  return db
+    .select()
+    .from(heatStressWorkWarningsTable)
+    .where(eq(heatStressWorkWarningsTable.report_date, date));
+};
+
 // daily summary
 
 export const insertDailySummary = async (
   c: Context<{ Bindings: Bindings }>,
   dailySummary: DailySummary
 ) => {
-  const db = drizzle(c.env.DB);
-  return db.insert(dailySummariesTable).values(dailySummary).returning();
+  try {
+    const db = drizzle(c.env.DB);
+    console.log(`insert `, dailySummary)
+    return db.insert(dailySummariesTable).values(dailySummary).returning();
+  } catch (err) {
+    throw err;
+  }
 };
 
-
-
-
-
-
-
-
-
-
+export const selectDailySummaryByDate = async (
+  c: Context<{ Bindings: Bindings }>,
+  date: string
+) => {
+  const db = drizzle(c.env.DB);
+  return db
+    .select()
+    .from(dailySummariesTable)
+    .where(eq(dailySummariesTable.date, date));
+};

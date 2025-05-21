@@ -17,6 +17,8 @@ export const bearerToken = "joerogan";
 export const BearerAuthHeader = {
   headers: `Authorization: Bearer ${bearerToken}`,
 };
+export const AuthGetOption = {method: "GET", ...BearerAuthHeader};
+export const AuthPostOption = {method: "POST", ...BearerAuthHeader};
 export const reactDemoAppDomain = `https://${reactDemoAppBaseUrl}.${workersBaseUrl}`;
 export const reactAppDomain = `https://${reactAppBaseUrl}.${workersBaseUrl}`;
 export const quotationAppDomain = `https://${quotationAppBaseUrl}.${workersBaseUrl}`;

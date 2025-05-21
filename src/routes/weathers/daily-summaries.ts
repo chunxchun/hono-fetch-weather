@@ -5,12 +5,9 @@ import { Hono } from "hono";
 import { v4 as uuidv4 } from "uuid";
 dayjs.extend(customParseFormat);
 
-import { insertDailySummary } from "@/lib/database";
-import { successResponse } from "@/lib/helpers";
-import type {
-  DailySummary,
-  HourlyReading
-} from "@/types/weather";
+import { insertDailySummary, selectHourlyReportByDate } from "@/lib/database";
+import { failedResponse, successResponse, validateDate } from "@/lib/helpers";
+import type { DailySummary, HourlyReading } from "@/types/weather";
 
 const app = new Hono<{ Bindings: Bindings }>();
 
@@ -64,41 +61,23 @@ app.get("/:yyyy/:mm/:dd", async (c) => {
 
 app.post("/:yyyy/:mm/:dd", async (c) => {
   const { yyyy, mm, dd } = c.req.param();
-  const date = `${yyyy}-${mm}-${dd}`;
-
-  if (!yyyy || !mm || !dd) {
-    return c.json({ succss: false, message: `enter a valid date` }, 400);
-  }
-  // dayjs('2022-01-33').isValid();
-  // true, parsed to 2022-02-02
-  if (!dayjs(date, "YYYY-MM-DD", true).isValid()) {
-    return c.json(
-      { succss: false, message: `${date} is not a valid date` },
-      400
-    );
-  }
   try {
-    const { success, results } = await c.env.DB.prepare(
-      "SELECT * FROM hourly_readings WHERE report_date = ?"
-    )
-      .bind(date)
-      .all();
-
-    if (!success) {
-      return c.json(
-        { success: false, message: `fetch d1 ${date} hourly readings failed` },
-        400
-      );
+    const date = validateDate(yyyy, mm, dd);
+    console.log("date", date);
+    const hourlyReadings = await selectHourlyReportByDate(c, date);
+    console.log("get hr");
+    if (!hourlyReadings.length) {
+      return failedResponse(c, `no hourly readings found for date ${date}`);
     }
+    console.log(hourlyReadings);
 
-    if (results.length) {
-      return c.json({ success: false, message: `no hourly readings` }, 400);
-    }
-
-    const temperatureArr = (results as HourlyReading[]).map(
+    const trimmedHourlyReadings = hourlyReadings.filter(
+      (hourlyReading) => hourlyReading.temperature && hourlyReading.humidity
+    );
+    const temperatureArr = trimmedHourlyReadings.map(
       (hourlyReading: HourlyReading) => parseInt(hourlyReading.temperature)
     );
-    const humidityArr = (results as HourlyReading[]).map(
+    const humidityArr = trimmedHourlyReadings.map(
       (hourlyReading: HourlyReading) => parseInt(hourlyReading.humidity)
     );
 
@@ -116,14 +95,17 @@ app.post("/:yyyy/:mm/:dd", async (c) => {
       max_humidity: maxHumidity,
       min_humidity: minHumidity,
     };
+    console.log(summary);
 
     const insertResults = await insertDailySummary(c, summary);
-    return c.json(
-      { success: true, message: `success post summary`, insertResults },
-      200
-    );
+
+    return successResponse(c, `success post summary for date ${date}`, insertResults);
   } catch (err) {
-    return c.json({ success: false, message: `failed get summary` });
+    return failedResponse(
+      c,
+      `failed post daily summary for date ${yyyy}-${mm}-${dd}`,
+      JSON.stringify(err)
+    );
   }
 });
 
