@@ -30,8 +30,8 @@
   "d1_databases": [
     {
       "binding": "DB",
-      "database_name": "d1-demo",
-      "database_id": "3a343570-36b5-4eff-9a05-38a79a285cc9",
+      "database_name": "tong-kee-d1",
+      "database_id": "6da1e937-ad30-48b6-bbee-030e710fd8e6",
       "migrations_dir": "drizzle/migrations"
     }
   ],

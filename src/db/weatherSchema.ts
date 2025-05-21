@@ -1,4 +1,4 @@
-import { sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { sqliteTable, text, integer } from "drizzle-orm/sqlite-core";
 
 export const pressLinksTable = sqliteTable("press_links", {
   id: text().primaryKey(),
@@ -38,8 +38,9 @@ export const heatStressWorkWarningsTable = sqliteTable(
 
 export const dailySummariesTable = sqliteTable("daily_summaries", {
   id: text().primaryKey(),
-  min_temperature: text().notNull(),
-  max_temperature: text().notNull(),
-  min_humidity: text().notNull(),
-  max_humidity: text().notNull(),
+  date: text().notNull(),
+  min_temperature: integer().notNull(),
+  max_temperature: integer().notNull(),
+  min_humidity: integer().notNull(),
+  max_humidity: integer().notNull(),
 });

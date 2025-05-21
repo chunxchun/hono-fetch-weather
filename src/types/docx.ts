@@ -8,7 +8,7 @@ export type DOCX_IMAGE_DATA = {
 };
 
 export type DOCX_MAN_POWER_DATA = {
-  // id: string;
+  id: string;
   work_desc: Array<string>;
   quantity: string;
   man_count: number;

@@ -7,6 +7,7 @@ import { Context } from "hono";
 import { Bindings } from "../config";
 import { DailyReport, DailyReportImage } from "../types/dailyReport";
 import {
+  DailySummary,
   HeatStressWorkWarning,
   HourlyReading,
   PressLink,
@@ -15,9 +16,12 @@ import {
   heatStressWorkWarningsTable,
   hourlyReadingsTable,
   pressLinksTable,
+  dailySummariesTable,
 } from "../db/weatherSchema";
 import { eq } from "drizzle-orm";
+import { link } from "fs";
 
+// daily report
 export const deleteDailyReportImageByUrl = async (
   c: Context<{ Bindings: Bindings }>,
   url: string
@@ -29,14 +33,6 @@ export const deleteDailyReportImageByUrl = async (
     .returning();
 };
 
-export const insertDailyReportImage = async (
-  c: Context<{ Bindings: Bindings }>,
-  dailyReportImage: DailyReportImage
-) => {
-  const db = drizzle(c.env.DB);
-  return db.insert(dailyReportImagesTable).values(dailyReportImage).returning();
-};
-
 export const insertDailyReport = async (
   c: Context<{ Bindings: Bindings }>,
   dailyReport: DailyReport
@@ -45,7 +41,7 @@ export const insertDailyReport = async (
   return db.insert(dailyReportsTable).values(dailyReport).returning();
 };
 
-export const readDailyReport = async (
+export const readDailyReportById = async (
   c: Context<{ Bindings: Bindings }>,
   dailyReportId: string
 ) => {
@@ -67,6 +63,18 @@ export const readDailyReportByDate = async (
     .where(eq(dailyReportsTable.date, date));
 };
 
+// daily report image
+
+export const insertDailyReportImage = async (
+  c: Context<{ Bindings: Bindings }>,
+  dailyReportImage: DailyReportImage
+) => {
+  const db = drizzle(c.env.DB);
+  return db.insert(dailyReportImagesTable).values(dailyReportImage).returning();
+};
+
+// press link
+
 export const insertPressLink = async (
   c: Context<{ Bindings: Bindings }>,
   pressLink: PressLink
@@ -75,6 +83,8 @@ export const insertPressLink = async (
   return db.insert(pressLinksTable).values(pressLink).returning();
 };
 
+// hourly reading
+
 export const insertHourlyReading = async (
   c: Context<{ Bindings: Bindings }>,
   hourlyReading: HourlyReading
@@ -82,6 +92,8 @@ export const insertHourlyReading = async (
   const db = drizzle(c.env.DB);
   return db.insert(hourlyReadingsTable).values(hourlyReading).returning();
 };
+
+// heat stress work warning
 
 export const insertHeatStressWorkWarning = async (
   c: Context<{ Bindings: Bindings }>,
@@ -93,3 +105,23 @@ export const insertHeatStressWorkWarning = async (
     .values(heatStressWorkWarning)
     .returning();
 };
+
+// daily summary
+
+export const insertDailySummary = async (
+  c: Context<{ Bindings: Bindings }>,
+  dailySummary: DailySummary
+) => {
+  const db = drizzle(c.env.DB);
+  return db.insert(dailySummariesTable).values(dailySummary).returning();
+};
+
+
+
+
+
+
+
+
+
+

@@ -38,6 +38,10 @@ export const createHeader = (
           }),
         ],
       }),
+      new Paragraph({
+        alignment: AlignmentType.RIGHT,
+        children: [],
+      }),
     ],
   });
 };

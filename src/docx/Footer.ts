@@ -84,7 +84,7 @@ export const createSignTable = (tongKeeRep: string, signature: ArrayBuffer) => {
     borders: TableBorders.NONE,
     rows: [
       new TableRow({
-        height: { value: 2000, rule: "exact" },
+        height: { value: 1500, rule: "exact" },
         children: [leftSignTableCell, rightSignTableCell],
       }),
     ],

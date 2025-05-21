@@ -4,12 +4,13 @@
     "dev": "wrangler dev",
     "deploy": "wrangler deploy --minify",
     "cf-typegen": "wrangler types --env-interface CloudflareBindings",
-    "init-remote-weather-database": "npx wrangler d1 execute d1-demo --remote --file=./src/db/weatherSchema.sql",
-    "init-remote-daily-report-database": "npx wrangler d1 execute d1-demo --remote --file=./src/db/dailyReportSchema.sql",
-    "init-remote-database": "pnpm run init-remote-weather-database && pnpm run init-remote-daily-report-database",
-    "init-local-weather-database": "npx wrangler d1 execute d1-demo --local --file=./src/db/weatherSchema.sql",
-    "init-local-daily-report-database": "npx wrangler d1 execute d1-demo --local --file=./src/db/dailyReportSchema.sql",
-    "init-local-database": "pnpm run init-local-weather-database && pnpm run init-local-daily-report-database"
+    "init-remote-weather-db": "npx wrangler d1 execute tong-kee-d1 --remote --file=./src/db/weatherSchema.sql",
+    "init-remote-daily-report-db": "npx wrangler d1 execute tong-kee-d1 --remote --file=./src/db/dailyReportSchema.sql",
+    "init-remote-db": "pnpm run init-remote-weather-db && pnpm run init-remote-daily-report-db",
+    "init-local-weather-db": "npx wrangler d1 execute tong-kee-d1 --local --file=./src/db/weatherSchema.sql",
+    "init-local-daily-report-db": "npx wrangler d1 execute tong-kee-d1 --local --file=./src/db/dailyReportSchema.sql",
+    "init-local-db": "pnpm run init-local-weather-db && pnpm run init-local-daily-report-db",
+    "list-remote-db-table": "npx wrangler d1 execute tong-kee-d1 --remote --command \"SELECT name, sql FROM sqlite_master\""
   },
   "dependencies": {
     "@radix-ui/react-slot": "^1.2.2",

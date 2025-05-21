@@ -37,7 +37,10 @@ const createDoc = async ({
   console.log(`footer ready`);
 
   try {
-    const total_man_count = man_powers.reduce((acc, cur) => acc += cur.man_count, 0)
+    const total_man_count = man_powers.reduce(
+      (acc, cur) => (acc += cur.man_count),
+      0
+    );
 
     const doc = new Document({
       sections: [
@@ -70,9 +73,7 @@ const createDoc = async ({
                 }),
               ],
             }),
-            new Paragraph({
-              children: [],
-            }),
+            new Paragraph({ children: [] }),
             new Paragraph({
               alignment: "center",
               children: [
