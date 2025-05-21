@@ -15,7 +15,7 @@ import dailyReportsRoute from "./routes/daily-reports";
 import imagesRoute from "./routes/images";
 import invoicesRoute from "./routes/invoices";
 import testsRoute from "./routes/tests";
-import weathersRoute from "./routes/weathers";
+import weathersRoute from "./routes/weathers/weathers";
 import demoRoute from "./routes/demo";
 const app = new Hono<{ Bindings: Bindings }>();
 

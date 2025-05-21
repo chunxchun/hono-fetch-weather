@@ -56,11 +56,11 @@ export const insertD1 = async (data: string, path: string, id: string) => {};
 export const successResponse = (
   c: Context,
   message: string,
-  result: any = null
+  results: any = null
 ) => {
-  return result === null
-    ? c.json({ success: true, message, result }, 200)
-    : c.json({ success: true, message }, 200);
+  return results === null
+    ? c.json({ success: true, message }, 200)
+    : c.json({ success: true, message, results }, 200);
 };
 
 export const failedResponse = (
