@@ -24,7 +24,7 @@
   "r2_buckets": [
     {
       "binding": "BUCKET",
-      "bucket_name": "demo"
+      "bucket_name": "tong-kee-r2"
     }
   ],
   "d1_databases": [
