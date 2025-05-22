@@ -7,9 +7,8 @@ import { v4 as uuidv4 } from "uuid";
 dayjs.extend(customParseFormat);
 
 import { failedResponse, successResponse, validateDate } from "@/lib/helpers";
-import type {
-  PressLink
-} from "@/types/weather";
+import type { PressLink } from "@/types/weather";
+import { deletePressLinkByDate } from "@/lib/database";
 
 const app = new Hono<{ Bindings: Bindings }>();
 
@@ -118,5 +117,25 @@ app.post("/:yyyy/:mm/:dd", async (c) => {
 });
 
 app.put("/:yyyy/:mm/:dd", async (c) => {});
+
+app.delete(":yyyy/:mm/:dd", async (c) => {
+  const { yyyy, mm, dd } = c.req.param();
+
+  try {
+    const date = validateDate(yyyy, mm, dd);
+    const results = await deletePressLinkByDate(c, date);
+    return successResponse(
+      c,
+      `success delete press links for date ${date}`,
+      results
+    );
+  } catch (err) {
+    return failedResponse(
+      c,
+      `failed delete press links for date ${yyyy}-${mm}-${dd}`,
+      JSON.stringify(err)
+    );
+  } // fetch database
+});
 
 export default app;

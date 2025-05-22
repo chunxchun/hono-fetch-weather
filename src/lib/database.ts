@@ -93,6 +93,16 @@ export const selectPressLinkByDate = async (
     .from(pressLinksTable)
     .where(eq(pressLinksTable.press_release_date, date));
 };
+
+export const deletePressLinkByDate = async (
+  c: Context<{ Bindings: Bindings }>,
+  date: string
+) => {
+  const db = drizzle(c.env.DB);
+  return db
+    .delete(pressLinksTable)
+    .where(eq(pressLinksTable.press_release_date, date));
+};
 // hourly reading
 
 export const insertHourlyReading = async (
@@ -145,7 +155,7 @@ export const insertDailySummary = async (
 ) => {
   try {
     const db = drizzle(c.env.DB);
-    console.log(`insert `, dailySummary)
+    console.log(`insert `, dailySummary);
     return db.insert(dailySummariesTable).values(dailySummary).returning();
   } catch (err) {
     throw err;

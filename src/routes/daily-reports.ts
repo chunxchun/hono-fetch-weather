@@ -4,56 +4,46 @@ import dayjs from "dayjs";
 import { v4 as uuidv4 } from "uuid";
 import type { DailyReportImage } from "../types/dailyReport";
 import { drizzle } from "drizzle-orm/d1";
-import { dailyReportImagesTable } from "../db/dailyReportSchema";
+import {
+  dailyReportImagesTable,
+  dailyReportManPowersTable,
+} from "../db/dailyReportSchema";
 import { eq } from "drizzle-orm";
 import {
   deleteDailyReportImageByUrl,
   insertDailyReportImage,
 } from "../lib/database";
-import { validateFormDataString } from "../lib/helpers";
+import {
+  failedResponse,
+  successResponse,
+  validateDate,
+  validateFormDataString,
+} from "../lib/helpers";
+import { DOCX_MAN_POWER_DATA } from "@/types/docx";
 
 const app = new Hono<{ Bindings: Bindings }>();
 
 app.get("/images/:yyyy/:mm/:dd", async (c) => {
   const { yyyy, mm, dd } = c.req.param();
-  const date = `${yyyy}-${mm}-${dd}`;
-
-  if (!yyyy || !mm || !dd) {
-    return c.json({ succss: false, message: `enter a valid date` }, 400);
-  }
-
-  if (!dayjs(date, "YYYY-MM-DD", true).isValid()) {
-    return c.json(
-      { succss: false, message: `${date} is not a valid date` },
-      400
-    );
-  }
-
   try {
+    const date = validateDate(yyyy, mm, dd);
     // fetch database
-
     const db = drizzle(c.env.DB);
     const results = await db
       .select()
       .from(dailyReportImagesTable)
       .where(eq(dailyReportImagesTable.date, date));
 
-    return c.json(
-      {
-        success: true,
-        message: `fetch d1 ${date} daily report images success`,
-        results: results,
-      },
-      200
+    return successResponse(
+      c,
+      `fetch d1 ${date} daily report images success`,
+      results
     );
   } catch (err) {
-    return c.json(
-      {
-        success: false,
-        message: `failed get daily report images for date ${date}`,
-        err: JSON.stringify(err),
-      },
-      400
+    return failedResponse(
+      c,
+      `failed get daily report images for date ${yyyy}-${mm}-${dd}`,
+      JSON.stringify(err)
     );
   }
 });
@@ -226,6 +216,7 @@ app.on(
   }
 );
 
+// delete by key (i.e. r2 key)
 app.delete("/images/:key", async (c) => {
   const { key } = c.req.param();
   console.log(`delete image ${key}`);
@@ -247,6 +238,69 @@ app.delete("/images/:key", async (c) => {
       message: `fail delete image`,
       err: err,
     });
+  }
+});
+
+app.post("/man-powers/:yyyy/:mm/:dd", async (c) => {
+  const { yyyy, mm, dd } = c.req.param();
+
+  try {
+    const data = await c.req.json();
+    const date = validateDate(yyyy, mm, dd);
+    const today = dayjs().format("yyyy-mm-dd");
+    // fetch database
+    const insertData = {
+      id: uuidv4(),
+      date,
+      work_desc: data.work_desc,
+      quantity: data.quantity,
+      man_count: data.quantity,
+      location: data.location,
+      remarks: data.remarks,
+      created_at: today,
+      updated_at: today,
+    };
+    const db = drizzle(c.env.DB);
+    const results = await db
+      .insert(dailyReportManPowersTable)
+      .values(insertData);
+
+    return successResponse(
+      c,
+      `post d1 ${date} daily report man power success`,
+      results
+    );
+  } catch (err) {
+    return failedResponse(
+      c,
+      `failed post daily report man power for date ${yyyy}-${mm}-${dd}`,
+      JSON.stringify(err)
+    );
+  }
+});
+
+app.get("/man-powers/:yyyy/:mm/:dd", async (c) => {
+  const { yyyy, mm, dd } = c.req.param();
+  try {
+    const date = validateDate(yyyy, mm, dd);
+    // fetch database
+    const db = drizzle(c.env.DB);
+    const results = await db
+      .select()
+      .from(dailyReportManPowersTable)
+      .where(eq(dailyReportManPowersTable.date, date));
+
+    return successResponse(
+      c,
+      `fetch d1 ${date} daily report man powers success`,
+      results
+    );
+  } catch (err) {
+    return failedResponse(
+      c,
+      `failed get daily report man powers for date ${yyyy}-${mm}-${dd}`,
+      JSON.stringify(err)
+    );
   }
 });
 
