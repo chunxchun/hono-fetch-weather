@@ -11,7 +11,7 @@ import customParseFormat from "dayjs/plugin/customParseFormat";
 import { Hono } from "hono";
 dayjs.extend(customParseFormat);
 import { v4 as uuidv4 } from "uuid";
-import { failedResponse, successResponse, validateDate } from "@/lib/helpers";
+import { failedResponse, getDateFromUrl, successResponse, validateDate } from "@/lib/helpers";
 import type { HourlyReading, PressLink } from "@/types/weather";
 import { insertHourlyReading, selectPressLinkByDate } from "@/lib/database";
 import {
@@ -64,15 +64,9 @@ app.get("/:id", async (c) => {
 
 const scrapeHourlyReading = async (url: string): Promise<HourlyReading> => {
   try {
-    const decodeUrl = decodeURI(url);
-    const dateStr = decodeUrl.split("/").pop()?.slice(1, 9);
-    const yyyy = dateStr?.slice(0, 4);
-    const mm = dateStr?.slice(4, 6);
-    const dd = dateStr?.slice(6, 8);
 
-    const date = `${yyyy}-${mm}-${dd}`;
-
-    const content = await fetch(decodeUrl);
+    const date = getDateFromUrl(url);
+    const content = await fetch(decodeURI(url));
     const html = await content.text();
 
     const $ = load(html);
@@ -125,10 +119,10 @@ app.post("/:url", async (c) => {
       400
     );
   }
+
   try {
     const hourlyReading = await scrapeHourlyReading(url);
     const insertResults = await insertHourlyReading(c, hourlyReading);
-
     return successResponse(
       c,
       `success post hourly reading success`,
@@ -141,6 +135,7 @@ app.post("/:url", async (c) => {
 
 app.post("/:yyyy/:mm/:dd", async (c) => {
   const { yyyy, mm, dd } = c.req.param();
+  
   try {
     const date = validateDate(yyyy, mm, dd);
     // fetch press links
@@ -184,20 +179,7 @@ app.post("/:yyyy/:mm/:dd", async (c) => {
 // fetch hourly report of a particular date
 app.get("/:yyyy/:mm/:dd", async (c) => {
   const { yyyy, mm, dd } = c.req.param();
-  const date = `${yyyy}-${mm}-${dd}`;
-
-  if (!yyyy || !mm || !dd) {
-    return c.json({ succss: false, message: `enter a valid date` }, 400);
-  }
-  // dayjs('2022-01-33').isValid();
-  // true, parsed to 2022-02-02
-  if (!dayjs(date, "YYYY-MM-DD", true).isValid()) {
-    return c.json(
-      { succss: false, message: `${date} is not a valid date` },
-      400
-    );
-  }
-
+  const date = validateDate(yyyy, mm, dd);
   try {
     // fetch database
     const { success, results } = await c.env.DB.prepare(

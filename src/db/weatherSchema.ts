@@ -1,4 +1,4 @@
-import { sqliteTable, text, int } from "drizzle-orm/sqlite-core";
+import { sqliteTable, text, int, integer } from "drizzle-orm/sqlite-core";
 
 export const pressLinksTable = sqliteTable("press_links", {
   id: text().primaryKey(),
@@ -36,6 +36,17 @@ export const heatStressWorkWarningsTable = sqliteTable(
   }
 );
 
+export const heatStressWorkWarningSummariesTable = sqliteTable(
+  "heat_stress_work_warning_summaries",
+  {
+    id: text().primaryKey(),
+    report_date: text().notNull(),
+    fetched: integer({ mode: 'boolean'}).notNull().default(true),
+    heat_stress_work_warnings: text().notNull(), // store json array { level, start_time, cancelled_time }
+    created_at: text().notNull(),
+    updated_at: text().notNull(),
+  }
+);
 export const dailySummariesTable = sqliteTable("daily_summaries", {
   id: text().primaryKey(),
   date: text().notNull(),

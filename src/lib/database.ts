@@ -9,6 +9,7 @@ import { DailyReport, DailyReportImage } from "../types/dailyReport";
 import {
   DailySummary,
   HeatStressWorkWarning,
+  HeatStressWorkWarningSummary,
   HourlyReading,
   PressLink,
 } from "../types/weather";
@@ -17,6 +18,7 @@ import {
   hourlyReadingsTable,
   pressLinksTable,
   dailySummariesTable,
+  heatStressWorkWarningSummariesTable,
 } from "../db/weatherSchema";
 import { eq } from "drizzle-orm";
 import { link } from "fs";
@@ -147,6 +149,27 @@ export const selectHeatStressWorkWarningByDate = async (
     .where(eq(heatStressWorkWarningsTable.report_date, date));
 };
 
+export const insertHeatStressWorkWarningSummary = async (
+  c: Context<{ Bindings: Bindings }>,
+  heatStressWorkWarningSummary: HeatStressWorkWarningSummary
+) => {
+  const db = drizzle(c.env.DB);
+  return db
+    .insert(heatStressWorkWarningSummariesTable)
+    .values(heatStressWorkWarningSummary)
+    .returning();
+};
+
+export const selectHeatStressWorkWarningSummaryByDate = async (
+  c: Context<{ Bindings: Bindings }>,
+  date: string
+) => {
+  const db = drizzle(c.env.DB);
+  return db
+    .select()
+    .from(heatStressWorkWarningSummariesTable)
+    .where(eq(heatStressWorkWarningsTable.report_date, date));
+};
 // daily summary
 
 export const insertDailySummary = async (

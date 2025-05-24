@@ -51,6 +51,19 @@ export const validateFormDateImageFile = (c: Context, data: string | File) => {
   return data as File;
 };
 
+export const getDateFromUrl = (url: string) => {
+  const dateStr = url.split("/").pop()?.slice(1, 9);
+  const yyyy = dateStr?.slice(0, 4);
+  const mm = dateStr?.slice(4, 6);
+  const dd = dateStr?.slice(6, 8);
+
+  if (!yyyy || !mm || !dd) {
+    throw new Error(`not a valid date`);
+  }
+
+  return validateDate(yyyy, mm, dd);
+};
+
 export const insertD1 = async (data: string, path: string, id: string) => {};
 
 export const successResponse = (
