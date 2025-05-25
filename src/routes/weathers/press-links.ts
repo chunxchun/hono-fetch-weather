@@ -46,8 +46,12 @@ app.get("/:yyyy/:mm/:dd", async (c) => {
 
 const scrapePressLinks = async (url: string) => {
   const content = await fetch(url);
-  const date = url.slice(-14, -4).replaceAll("/", "-");
-
+  console.log(url);
+  const year = url.slice(-13,-9)
+  const month = url.slice(-9, -7)
+  const day = url.slice(-6,-4)
+  const date = `${year}-${month}-${day}` 
+  
   const html = await content.text();
   const $ = load(html);
   const pressLinkSelector =
