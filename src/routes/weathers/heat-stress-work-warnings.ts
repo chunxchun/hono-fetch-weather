@@ -12,7 +12,10 @@ import {
   successResponse,
   validateDate,
 } from "@/lib/helpers";
-import type { HeatStressWorkWarning, HeatStressWorkWarningSummary } from "@/types/weather";
+import type {
+  HeatStressWorkWarning,
+  HeatStressWorkWarningSummary,
+} from "@/types/weather";
 import {
   insertHeatStressWorkWarning,
   insertHeatStressWorkWarningSummary,
@@ -92,8 +95,8 @@ const scrapeHeatStressWorkWarning = async (
         /(?<=The Heat Stress at Work Warning has been cancelled at )(.*?)(?= today)/g
       )?.[0] || "";
 
-    const today = dayjs().format("YYYY-MM-DD");
     const id = uuidv4();
+    const today = dayjs().format("YYYY-MM-DD");
     const hsww: HeatStressWorkWarning = {
       id: id,
       content: reportContent.replaceAll('"', ""),
@@ -142,6 +145,105 @@ app.post("/:url", async (c) => {
   }
 });
 
+app.post("/:yyyy/:mm/:dd", async (c) => {
+  const { yyyy, mm, dd } = c.req.param();
+
+  try {
+    const date = validateDate(yyyy, mm, dd);
+    const pressLinks = await selectPressLinkByDate(c, date);
+
+    if (!pressLinks) {
+      return failedResponse(c, `failed get press links for date ${date}`);
+    }
+
+    if (!pressLinks.length) {
+      return failedResponse(c, `no press links found for date ${date}`);
+    }
+
+    const heatStressWorkWarningUrls = pressLinks
+      .filter((link) => link.title.toLowerCase().includes("heat stress"))
+      .map((link) => link.url);
+
+    if (heatStressWorkWarningUrls.length === 0) {
+      const today = dayjs().format("YYYY-MM-DD");
+      const emptyHeatStressWorkWarningSummary: HeatStressWorkWarningSummary = {
+        id: uuidv4(),
+        heat_stress_work_warnings: "",
+        report_date: date,
+        created_at: today,
+        updated_at: today,
+      };
+      const insertResults = await insertHeatStressWorkWarningSummary(
+        c,
+        emptyHeatStressWorkWarningSummary
+      );
+      return successResponse(
+        c,
+        `success create empty heat stress work summary for date ${date}`
+      );
+    }
+
+    const heatStressWorkWarningPromises = heatStressWorkWarningUrls.map((url) =>
+      scrapeHeatStressWorkWarning(url)
+    );
+    const heatStressWorkWarnings = await Promise.all(
+      heatStressWorkWarningPromises
+    );
+
+    const insertPromises = heatStressWorkWarnings.map((hsww) =>
+      insertHeatStressWorkWarning(c, hsww)
+    );
+
+    await Promise.all(insertPromises);
+    // create hsww summary
+    const startHSWW = heatStressWorkWarnings.filter((hsww) => hsww.start_time);
+    const endHSWW = heatStressWorkWarnings.filter(
+      (hsww) => hsww.cancelled_time
+    );
+
+    if (startHSWW.length !== endHSWW.length) {
+      return failedResponse(c, `heat stress work warnings not complete`);
+    }
+
+    const hsww = [];
+    for (let i = 0; i < startHSWW.length; i++) {
+      const completeHSWW = {
+        level: startHSWW[i].level,
+        start_time: startHSWW[i].start_time,
+        cancelled_time: endHSWW[i].cancelled_time,
+      };
+      hsww.push(completeHSWW);
+    }
+
+    const id = uuidv4();
+    const today = dayjs().format("yyyy-mm-dd");
+    const HSWWSummary: HeatStressWorkWarningSummary = {
+      id,
+      report_date: date,
+      fetched: true,
+      heat_stress_work_warnings: JSON.stringify(hsww),
+      created_at: today,
+      updated_at: today,
+    };
+    const insertSummaryPromise = await insertHeatStressWorkWarningSummary(
+      c,
+      HSWWSummary
+    );
+
+    return successResponse(
+      c,
+      `success insert heat stress work warning summaries for date ${date}`,
+      HSWWSummary
+    );
+  } catch (err) {
+    return failedResponse(
+      c,
+      `failed post heat stress work warnings summary`,
+      JSON.stringify(err)
+    );
+  }
+});
+
 // fetch all hsww on a particular date
 app.get("/:yyyy/:mm/:dd", async (c) => {
   const { yyyy, mm, dd } = c.req.param();
@@ -173,7 +275,7 @@ app.get("/:yyyy/:mm/:dd", async (c) => {
 });
 
 // fetch all heat stress work warning of a particular date
-app.get("/daily-summaries/:yyyy/:mm/:dd", async (c) => {
+app.get("/:yyyy/:mm/:dd/summary", async (c) => {
   const { yyyy, mm, dd } = c.req.param();
 
   try {
@@ -194,54 +296,6 @@ app.get("/daily-summaries/:yyyy/:mm/:dd", async (c) => {
       `fetch  heat stress work warnings summary failed`,
       JSON.stringify(err)
     );
-  }
-});
-
-app.post("/daily-summaries/:yyyy/:mm/:dd", async (c) => {
-  const { yyyy, mm, dd } = c.req.param();
-
-  try { 
-    const date = validateDate(yyyy, mm, dd);
-    // get press links
-    const pressLinks = await selectPressLinkByDate(c,date)
-    
-    if (!pressLinks) {
-      return failedResponse(c, `failed get press links for date ${date}`);
-    }
-
-    if (!pressLinks.length) {
-      return failedResponse(c, `no press links found for date ${date}`);
-    }
-
-    const heatStressWorkWarningUrls = pressLinks
-    .filter((link) => link.title.toLowerCase().includes("heat stress"))
-    .map((link) => link.url);
-
-    if (heatStressWorkWarningUrls.length === 0) {
-      const today = dayjs().format('YYYY-MM-DD');
-      const emptyHeatStressWorkWarningSummary: HeatStressWorkWarningSummary = {
-        id: uuidv4(),
-        heat_stress_work_warnings: "",
-        report_date: date,
-        created_at: today,
-        updated_at: today
-      }
-      const insertResults = await insertHeatStressWorkWarningSummary(c, emptyHeatStressWorkWarningSummary);
-      return successResponse(c, `success create empty heat stress work summary for date ${date}`)
-    }
-
-    const heatStressWorkWarningPromises = heatStressWorkWarningUrls.map(url => scrapeHeatStressWorkWarning(url));
-    const heatStressWorkWarnings = await Promise.all(heatStressWorkWarningPromises)
-    const insertPromises = heatStressWorkWarnings.map(hsww => insertHeatStressWorkWarning(c, hsww))
-    await Promise.all(insertPromises)
-
-    // create hsww summary
-
-    // in force: The Amber Heat Stress at Work Warning is still in force
-    // cancelled: The Heat Stress at Work Warning has been cancelled at 04.40 PM today (May 23).
-
-  }catch(err){
-
   }
 });
 

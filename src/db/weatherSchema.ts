@@ -47,6 +47,7 @@ export const heatStressWorkWarningSummariesTable = sqliteTable(
     updated_at: text().notNull(),
   }
 );
+
 export const dailySummariesTable = sqliteTable("daily_summaries", {
   id: text().primaryKey(),
   date: text().notNull(),

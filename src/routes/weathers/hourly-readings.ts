@@ -11,7 +11,12 @@ import customParseFormat from "dayjs/plugin/customParseFormat";
 import { Hono } from "hono";
 dayjs.extend(customParseFormat);
 import { v4 as uuidv4 } from "uuid";
-import { failedResponse, getDateFromUrl, successResponse, validateDate } from "@/lib/helpers";
+import {
+  failedResponse,
+  getDateFromUrl,
+  successResponse,
+  validateDate,
+} from "@/lib/helpers";
 import type { HourlyReading, PressLink } from "@/types/weather";
 import { insertHourlyReading, selectPressLinkByDate } from "@/lib/database";
 import {
@@ -64,7 +69,6 @@ app.get("/:id", async (c) => {
 
 const scrapeHourlyReading = async (url: string): Promise<HourlyReading> => {
   try {
-
     const date = getDateFromUrl(url);
     const content = await fetch(decodeURI(url));
     const html = await content.text();
@@ -75,12 +79,9 @@ const scrapeHourlyReading = async (url: string): Promise<HourlyReading> => {
 
     // extract information
     const temperature =
-      reportContent.match(
-        /(?<=WAS )(.*?)(?= DEGREES)/g
-      )?.[0] || "";
+      reportContent.match(/(?<=WAS )(.*?)(?= DEGREES)/g)?.[0] || "";
     const humidity =
-      reportContent.match(/(?<=HUMIDITY )(.*?)(?= PER)/g)?.[0] ||
-      "";
+      reportContent.match(/(?<=HUMIDITY )(.*?)(?= PER)/g)?.[0] || "";
     const time =
       reportContent.match(
         /(?<=AT )(.*?)(?= AT THE HONG KONG OBSERVATORY)/g
@@ -135,7 +136,7 @@ app.post("/:url", async (c) => {
 
 app.post("/:yyyy/:mm/:dd", async (c) => {
   const { yyyy, mm, dd } = c.req.param();
-  
+
   try {
     const date = validateDate(yyyy, mm, dd);
     // fetch press links
