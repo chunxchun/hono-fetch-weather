@@ -191,6 +191,7 @@ app.post("/:yyyy/:mm/:dd", async (c) => {
       insertHeatStressWorkWarning(c, hsww)
     );
 
+    const result = await setDailySummaryFetchedHSWW(c, date); 
     const results = await Promise.all(insertPromises);
     return successResponse(c, `success post hsww for date ${date}`, results);
     // create hsww summary
