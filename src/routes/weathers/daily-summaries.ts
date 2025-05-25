@@ -8,6 +8,7 @@ dayjs.extend(customParseFormat);
 import { insertDailySummary, selectHourlyReportByDate } from "@/lib/database";
 import { failedResponse, successResponse, validateDate } from "@/lib/helpers";
 import type { DailySummary, HourlyReading } from "@/types/weather";
+import { deleteDailySummaryByDate } from "@/lib/drizzle/daily-summaries";
 
 const app = new Hono<{ Bindings: Bindings }>();
 
@@ -17,19 +18,7 @@ app.get("/", async (c) => {
 
 app.get("/:yyyy/:mm/:dd", async (c) => {
   const { yyyy, mm, dd } = c.req.param();
-  const date = `${yyyy}-${mm}-${dd}`;
-
-  if (!yyyy || !mm || !dd) {
-    return c.json({ succss: false, message: `enter a valid date` }, 400);
-  }
-  // dayjs('2022-01-33').isValid();
-  // true, parsed to 2022-02-02
-  if (!dayjs(date, "YYYY-MM-DD", true).isValid()) {
-    return c.json(
-      { succss: false, message: `${date} is not a valid date` },
-      400
-    );
-  }
+  const date = validateDate(yyyy, mm, dd);
 
   try {
     const { success, results } = await c.env.DB.prepare(
@@ -63,9 +52,8 @@ app.post("/:yyyy/:mm/:dd", async (c) => {
   const { yyyy, mm, dd } = c.req.param();
   try {
     const date = validateDate(yyyy, mm, dd);
-    console.log("date", date);
     const hourlyReadings = await selectHourlyReportByDate(c, date);
-    console.log("get hr");
+
     if (!hourlyReadings.length) {
       return failedResponse(c, `no hourly readings found for date ${date}`);
     }
@@ -94,16 +82,45 @@ app.post("/:yyyy/:mm/:dd", async (c) => {
       min_temperature: minTemperature,
       max_humidity: maxHumidity,
       min_humidity: minHumidity,
+      fetched_hsww: false,
     };
-    console.log(summary);
+    // console.log(summary);
 
     const insertResults = await insertDailySummary(c, summary);
 
-    return successResponse(c, `success post summary for date ${date}`, insertResults);
+    return successResponse(
+      c,
+      `success post summary for date ${date}`,
+      insertResults
+    );
   } catch (err) {
     return failedResponse(
       c,
       `failed post daily summary for date ${yyyy}-${mm}-${dd}`,
+      JSON.stringify(err)
+    );
+  }
+});
+
+app.patch("/:yyyy/:mm/:dd", async (c) => {
+  const body = await c.req.json();
+  console.log(body);
+});
+
+app.delete("/:yyyy/:mm/:dd", async (c) => {
+  const { yyyy, mm, dd } = c.req.param();
+  try {
+    const date = validateDate(yyyy, mm, dd);
+    const result = await deleteDailySummaryByDate(c, date);
+    return successResponse(
+      c,
+      `success delete daily summary for date ${date}`,
+      result
+    );
+  } catch (err) {
+    return failedResponse(
+      c,
+      `failed delete daily summary for date ${yyyy}-${mm}-${dd}`,
       JSON.stringify(err)
     );
   }

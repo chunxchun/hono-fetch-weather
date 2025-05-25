@@ -195,3 +195,15 @@ export const selectDailySummaryByDate = async (
     .from(dailySummariesTable)
     .where(eq(dailySummariesTable.date, date));
 };
+
+export const setDailySummaryFetchedHSWW = async (
+  c: Context<{ Bindings: Bindings }>,
+  date: string
+) => {
+  const db = drizzle(c.env.DB);
+  return db
+    .update(dailySummariesTable)
+    .set({ fetched_hsww: true })
+    .where(eq(dailySummariesTable.date, date))
+    .returning();
+};

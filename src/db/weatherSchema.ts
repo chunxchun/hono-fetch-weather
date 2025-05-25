@@ -41,7 +41,7 @@ export const heatStressWorkWarningSummariesTable = sqliteTable(
   {
     id: text().primaryKey(),
     report_date: text().notNull(),
-    fetched: integer({ mode: 'boolean'}).notNull().default(true),
+    fetched: integer({ mode: "boolean" }).notNull().default(true),
     heat_stress_work_warnings: text().notNull(), // store json array { level, start_time, cancelled_time }
     created_at: text().notNull(),
     updated_at: text().notNull(),
@@ -50,9 +50,10 @@ export const heatStressWorkWarningSummariesTable = sqliteTable(
 
 export const dailySummariesTable = sqliteTable("daily_summaries", {
   id: text().primaryKey(),
-  date: text().notNull(),
+  date: text().notNull().unique(),
   max_temperature: int().notNull(),
   min_temperature: int().notNull(),
   min_humidity: int().notNull(),
   max_humidity: int().notNull(),
+  fetched_hsww: int({ mode: "boolean" }).notNull().default(false),
 });

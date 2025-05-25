@@ -22,6 +22,7 @@ import {
   selectHeatStressWorkWarningByDate,
   selectHeatStressWorkWarningSummaryByDate,
   selectPressLinkByDate,
+  setDailySummaryFetchedHSWW,
 } from "@/lib/database";
 
 const app = new Hono<{ Bindings: Bindings }>();
@@ -166,20 +167,12 @@ app.post("/:yyyy/:mm/:dd", async (c) => {
 
     if (heatStressWorkWarningUrls.length === 0) {
       const today = dayjs().format("YYYY-MM-DD");
-      const emptyHeatStressWorkWarningSummary: HeatStressWorkWarningSummary = {
-        id: uuidv4(),
-        heat_stress_work_warnings: "",
-        report_date: date,
-        created_at: today,
-        updated_at: today,
-      };
-      const insertResults = await insertHeatStressWorkWarningSummary(
-        c,
-        emptyHeatStressWorkWarningSummary
-      );
+      // patch daily summaries
+      const result = await setDailySummaryFetchedHSWW(c, date)
+      
       return successResponse(
         c,
-        `success create empty heat stress work summary for date ${date}`
+        `success fetch heat stress work summary for date ${date}`, result
       );
     }
 
@@ -298,5 +291,6 @@ app.get("/:yyyy/:mm/:dd/summary", async (c) => {
     );
   }
 });
+
 
 export default app;

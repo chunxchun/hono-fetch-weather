@@ -49,5 +49,6 @@ CREATE TABLE IF NOT EXISTS "daily_summaries" (
   "max_temperature" integer NOT NULL,
   "min_humidity" integer NOT NULL,
   "max_humidity" integer NOT NULL,
+  "fetched_hsww" boolean NOT NULL default 0,
   UNIQUE (date)
 );
