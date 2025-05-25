@@ -8,6 +8,7 @@ dayjs.extend(customParseFormat);
 
 import { setDailySummaryFetchedHSWW } from "@/lib/drizzle/daily-summaries";
 import {
+  deleteHeatStressWorkWarningByDate,
   insertHeatStressWorkWarning,
   insertHeatStressWorkWarningSummary,
   selectHeatStressWorkWarningByDate,
@@ -238,6 +239,18 @@ app.post("/:yyyy/:mm/:dd", async (c) => {
       `failed post heat stress work warnings summary`,
       JSON.stringify(err)
     );
+  }
+});
+
+app.delete("/:yyyy/:mm/:dd", async (c) => {
+  const { yyyy, mm, dd } = c.req.param();
+
+  try {
+    const date = validateDate(yyyy, mm, dd);
+    const result = deleteHeatStressWorkWarningByDate(c, date);
+    return successResponse(c, `success delete hsww for date ${date}`);
+  } catch (err) {
+    return failedResponse(c, `failed delete hsww`, JSON.stringify(err));
   }
 });
 
