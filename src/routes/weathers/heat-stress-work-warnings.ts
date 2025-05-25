@@ -248,7 +248,7 @@ app.delete("/:yyyy/:mm/:dd", async (c) => {
   try {
     const date = validateDate(yyyy, mm, dd);
     const result = deleteHeatStressWorkWarningByDate(c, date);
-    return successResponse(c, `success delete hsww for date ${date}`);
+    return successResponse(c, `success delete hsww for date ${date}`, result);
   } catch (err) {
     return failedResponse(c, `failed delete hsww`, JSON.stringify(err));
   }
