@@ -5,7 +5,11 @@ import { Hono } from "hono";
 import { v4 as uuidv4 } from "uuid";
 dayjs.extend(customParseFormat);
 
-import { insertDailySummary, selectHourlyReportByDate } from "@/lib/database";
+import {
+  insertDailySummary,
+  selectDailySummaryByDate,
+} from "@/lib/drizzle/daily-summaries";
+import { selectHourlyReportsByDate } from "@/lib/drizzle/hourly-readings";
 import { failedResponse, successResponse, validateDate } from "@/lib/helpers";
 import type { DailySummary, HourlyReading } from "@/types/weather";
 import { deleteDailySummaryByDate } from "@/lib/drizzle/daily-summaries";
@@ -21,30 +25,18 @@ app.get("/:yyyy/:mm/:dd", async (c) => {
   const date = validateDate(yyyy, mm, dd);
 
   try {
-    const { success, results } = await c.env.DB.prepare(
-      "SELECT * FROM daily_summaries WHERE date = ?"
-    )
-      .bind(date)
-      .all();
-
-    if (!success) {
-      return c.json(
-        { success: false, message: `fetch d1 ${date} daily summary failed` },
-        400
-      );
-    }
-
-    return c.json({
-      success: true,
-      message: `fetch d1 ${date} daily summary success`,
-      results: results,
-    });
+    const result = await selectDailySummaryByDate(c, date);
+    return successResponse(
+      c,
+      `success get daily summary for date ${date}`,
+      result
+    );
   } catch (err) {
-    return c.json({
-      success: false,
-      message: `failed get daily summary for date ${date}`,
-      err: JSON.stringify(err),
-    });
+    return failedResponse(
+      c,
+      `failed get daily summary for date ${date}`,
+      JSON.stringify(err)
+    );
   }
 });
 
@@ -52,19 +44,19 @@ app.post("/:yyyy/:mm/:dd", async (c) => {
   const { yyyy, mm, dd } = c.req.param();
   try {
     const date = validateDate(yyyy, mm, dd);
-    const hourlyReadings = await selectHourlyReportByDate(c, date);
+    const hourlyReadings = await selectHourlyReportsByDate(c, date);
 
     if (!hourlyReadings.length) {
       return failedResponse(c, `no hourly readings found for date ${date}`);
     }
-    console.log(hourlyReadings);
-
     const trimmedHourlyReadings = hourlyReadings.filter(
       (hourlyReading) => hourlyReading.temperature && hourlyReading.humidity
     );
+
     const temperatureArr = trimmedHourlyReadings.map(
       (hourlyReading: HourlyReading) => parseInt(hourlyReading.temperature)
     );
+
     const humidityArr = trimmedHourlyReadings.map(
       (hourlyReading: HourlyReading) => parseInt(hourlyReading.humidity)
     );
@@ -84,7 +76,6 @@ app.post("/:yyyy/:mm/:dd", async (c) => {
       min_humidity: minHumidity,
       fetched_hsww: false,
     };
-    // console.log(summary);
 
     const insertResults = await insertDailySummary(c, summary);
 

@@ -1,29 +1,19 @@
-import {
-  appBaseUrl,
-  AuthGetOption,
-  AuthPostOption,
-  BearerAuthHeader,
-  Bindings,
-} from "@/config";
-import { load } from "cheerio";
-import dayjs from "dayjs";
-import customParseFormat from "dayjs/plugin/customParseFormat";
-import { Hono } from "hono";
-dayjs.extend(customParseFormat);
-import { v4 as uuidv4 } from "uuid";
+import { Bindings } from "@/config";
+import { insertHourlyReading } from "@/lib/drizzle/hourly-readings";
+import { selectPressLinksByDate } from "@/lib/drizzle/press-links";
 import {
   failedResponse,
   getDateFromUrl,
   successResponse,
   validateDate,
 } from "@/lib/helpers";
-import type { HourlyReading, PressLink } from "@/types/weather";
-import { insertHourlyReading, selectPressLinkByDate } from "@/lib/database";
-import {
-  HOURLY_READINGS_LINKS_ROUTE_PATH,
-  PRESS_LINKS_ROUTE_PATH,
-  WEATHERS_ROUTE_PATH,
-} from "@/route.config";
+import type { HourlyReading } from "@/types/weather";
+import { load } from "cheerio";
+import dayjs from "dayjs";
+import customParseFormat from "dayjs/plugin/customParseFormat";
+import { Hono } from "hono";
+import { v4 as uuidv4 } from "uuid";
+dayjs.extend(customParseFormat);
 
 const app = new Hono<{ Bindings: Bindings }>();
 
@@ -139,8 +129,7 @@ app.post("/:yyyy/:mm/:dd", async (c) => {
 
   try {
     const date = validateDate(yyyy, mm, dd);
-    // fetch press links
-    const pressLinks = await selectPressLinkByDate(c, date);
+    const pressLinks = await selectPressLinksByDate(c, date);
 
     if (!pressLinks) {
       return failedResponse(c, `failed get press links for date ${date}`);
@@ -161,9 +150,13 @@ app.post("/:yyyy/:mm/:dd", async (c) => {
     const insertPromises = hourlyReadings.map((hourlyReading) =>
       insertHourlyReading(c, hourlyReading)
     );
-    await Promise.all(insertPromises);
+    const results = await Promise.all(insertPromises);
 
-    return successResponse(c, `success post hourly readings for date ${date}`);
+    return successResponse(
+      c,
+      `success post hourly readings for date ${date}`,
+      results
+    );
   } catch (err) {
     return failedResponse(
       c,

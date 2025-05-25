@@ -1,209 +1,73 @@
-import { drizzle } from "drizzle-orm/d1";
-import {
-  dailyReportImagesTable,
-  dailyReportsTable,
-} from "../db/dailyReportSchema";
+import { HeatStressWorkWarning, PressLink } from "@/types/weather";
 import { Context } from "hono";
-import { Bindings } from "../config";
-import { DailyReport, DailyReportImage } from "../types/dailyReport";
-import {
-  DailySummary,
-  HeatStressWorkWarning,
-  HeatStressWorkWarningSummary,
-  HourlyReading,
-  PressLink,
-} from "../types/weather";
-import {
-  heatStressWorkWarningsTable,
-  hourlyReadingsTable,
-  pressLinksTable,
-  dailySummariesTable,
-  heatStressWorkWarningSummariesTable,
-} from "../db/weatherSchema";
-import { eq } from "drizzle-orm";
-import { link } from "fs";
 
-// daily report
-export const deleteDailyReportImageByUrl = async (
-  c: Context<{ Bindings: Bindings }>,
-  url: string
-) => {
-  const db = drizzle(c.env.DB);
-  return db
-    .delete(dailyReportImagesTable)
-    .where(eq(dailyReportImagesTable.url, url))
-    .returning();
-};
-
-export const insertDailyReport = async (
-  c: Context<{ Bindings: Bindings }>,
-  dailyReport: DailyReport
-) => {
-  const db = drizzle(c.env.DB);
-  return db.insert(dailyReportsTable).values(dailyReport).returning();
-};
-
-export const readDailyReportById = async (
-  c: Context<{ Bindings: Bindings }>,
-  dailyReportId: string
-) => {
-  const db = drizzle(c.env.DB);
-  return db
-    .select()
-    .from(dailyReportsTable)
-    .where(eq(dailyReportsTable.id, dailyReportId));
-};
-
-export const readDailyReportByDate = async (
-  c: Context<{ Bindings: Bindings }>,
-  date: string
-) => {
-  const db = drizzle(c.env.DB);
-  return db
-    .select()
-    .from(dailyReportsTable)
-    .where(eq(dailyReportsTable.date, date));
-};
-
-// daily report image
-
-export const insertDailyReportImage = async (
-  c: Context<{ Bindings: Bindings }>,
-  dailyReportImage: DailyReportImage
-) => {
-  const db = drizzle(c.env.DB);
-  return db.insert(dailyReportImagesTable).values(dailyReportImage).returning();
-};
-
-// press link
-
-export const insertPressLink = async (
-  c: Context<{ Bindings: Bindings }>,
-  pressLink: PressLink
-) => {
-  const db = drizzle(c.env.DB);
-  return db.insert(pressLinksTable).values(pressLink).returning();
-};
-
-export const selectPressLinkByDate = async (
-  c: Context<{ Bindings: Bindings }>,
-  date: string
-) => {
-  const db = drizzle(c.env.DB);
-  return db
-    .select()
-    .from(pressLinksTable)
-    .where(eq(pressLinksTable.press_release_date, date));
-};
-
-export const deletePressLinkByDate = async (
-  c: Context<{ Bindings: Bindings }>,
-  date: string
-) => {
-  const db = drizzle(c.env.DB);
-  return db
-    .delete(pressLinksTable)
-    .where(eq(pressLinksTable.press_release_date, date));
-};
-// hourly reading
-
-export const insertHourlyReading = async (
-  c: Context<{ Bindings: Bindings }>,
-  hourlyReading: HourlyReading
-) => {
-  const db = drizzle(c.env.DB);
-  return db.insert(hourlyReadingsTable).values(hourlyReading).returning();
-};
-
-export const selectHourlyReportByDate = async (
-  c: Context<{ Bindings: Bindings }>,
-  date: string
-) => {
-  const db = drizzle(c.env.DB);
-  return db
-    .select()
-    .from(hourlyReadingsTable)
-    .where(eq(hourlyReadingsTable.report_date, date));
-};
-// heat stress work warning
-
-export const insertHeatStressWorkWarning = async (
-  c: Context<{ Bindings: Bindings }>,
-  heatStressWorkWarning: HeatStressWorkWarning
-) => {
-  const db = drizzle(c.env.DB);
-  return db
-    .insert(heatStressWorkWarningsTable)
-    .values(heatStressWorkWarning)
-    .returning();
-};
-
-export const selectHeatStressWorkWarningByDate = async (
-  c: Context<{ Bindings: Bindings }>,
-  date: string
-) => {
-  const db = drizzle(c.env.DB);
-  return db
-    .select()
-    .from(heatStressWorkWarningsTable)
-    .where(eq(heatStressWorkWarningsTable.report_date, date));
-};
-
-export const insertHeatStressWorkWarningSummary = async (
-  c: Context<{ Bindings: Bindings }>,
-  heatStressWorkWarningSummary: HeatStressWorkWarningSummary
-) => {
-  const db = drizzle(c.env.DB);
-  return db
-    .insert(heatStressWorkWarningSummariesTable)
-    .values(heatStressWorkWarningSummary)
-    .returning();
-};
-
-export const selectHeatStressWorkWarningSummaryByDate = async (
-  c: Context<{ Bindings: Bindings }>,
-  date: string
-) => {
-  const db = drizzle(c.env.DB);
-  return db
-    .select()
-    .from(heatStressWorkWarningSummariesTable)
-    .where(eq(heatStressWorkWarningsTable.report_date, date));
-};
-// daily summary
-
-export const insertDailySummary = async (
-  c: Context<{ Bindings: Bindings }>,
-  dailySummary: DailySummary
+const insertHeatStressWorkWarnings = async (
+  c: Context,
+  hsww: HeatStressWorkWarning
 ) => {
   try {
-    const db = drizzle(c.env.DB);
-    console.log(`insert `, dailySummary);
-    return db.insert(dailySummariesTable).values(dailySummary).returning();
+    // prepare sql
+    const columns = [
+      "id",
+      "content",
+      "url",
+      "level",
+      "report_date",
+      "start_time",
+      "cancelled_time",
+      "created_at",
+      "updated_at",
+    ];
+    const columnStr = columns.join(",");
+    const tableName = "heat_stress_work_warnings";
+    const insertValues = `(
+      "${hsww.id}", 
+      "${hsww.content}", 
+      "${hsww.url}", 
+      "${hsww.level}", 
+      "${hsww.report_date}",
+      "${hsww.start_time}",
+      "${hsww.cancelled_time}",
+      "${hsww.created_at}", 
+      "${hsww.updated_at}"
+      )`;
+
+    const sqlInsert = `INSERT INTO ${tableName} (${columnStr}) VALUES ${insertValues}`;
+    const trimmedSqlInsert = sqlInsert
+      .replaceAll("\n", "")
+      .replaceAll("\t", "")
+      .replaceAll('\\"', '"');
+    // insert to d1
+    const insertResult = await c.env.DB.prepare(trimmedSqlInsert).all();
+    return insertResult;
   } catch (err) {
     throw err;
   }
 };
 
-export const selectDailySummaryByDate = async (
-  c: Context<{ Bindings: Bindings }>,
-  date: string
-) => {
-  const db = drizzle(c.env.DB);
-  return db
-    .select()
-    .from(dailySummariesTable)
-    .where(eq(dailySummariesTable.date, date));
-};
-
-export const setDailySummaryFetchedHSWW = async (
-  c: Context<{ Bindings: Bindings }>,
-  date: string
-) => {
-  const db = drizzle(c.env.DB);
-  return db
-    .update(dailySummariesTable)
-    .set({ fetched_hsww: true })
-    .where(eq(dailySummariesTable.date, date))
-    .returning();
+const insertPressLinks = async (c: Context, pressLinks: PressLink[]) => {
+  try {
+    const columns = [
+      "id",
+      "title",
+      "url",
+      "press_release_date",
+      "created_at",
+      "updated_at",
+    ];
+    const columnStr = columns.join(",");
+    const tableName = "press_links";
+    const insertValues = pressLinks.reduce((prev, curr) => {
+      return (
+        prev +
+        `("${curr.id}", "${curr.title}", "${curr.url}", "${curr.press_release_date}", "${curr.created_at}", "${curr.updated_at}"),`
+      );
+    }, "");
+    const valueStr = insertValues.slice(0, -1) + ";";
+    const sqlInsert = `INSERT INTO ${tableName} (${columnStr}) VALUES ${valueStr}`;
+    const insertResult = await c.env.DB.prepare(sqlInsert).all();
+    return insertResult;
+  } catch (err) {
+    throw err;
+  }
 };

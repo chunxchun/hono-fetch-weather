@@ -6,6 +6,14 @@ import { Hono } from "hono";
 import { v4 as uuidv4 } from "uuid";
 dayjs.extend(customParseFormat);
 
+import { setDailySummaryFetchedHSWW } from "@/lib/drizzle/daily-summaries";
+import {
+  insertHeatStressWorkWarning,
+  insertHeatStressWorkWarningSummary,
+  selectHeatStressWorkWarningByDate,
+  selectHeatStressWorkWarningSummaryByDate,
+} from "@/lib/drizzle/heat-stress-work-warnings";
+import { selectPressLinksByDate } from "@/lib/drizzle/press-links";
 import {
   failedResponse,
   getDateFromUrl,
@@ -16,14 +24,6 @@ import type {
   HeatStressWorkWarning,
   HeatStressWorkWarningSummary,
 } from "@/types/weather";
-import {
-  insertHeatStressWorkWarning,
-  insertHeatStressWorkWarningSummary,
-  selectHeatStressWorkWarningByDate,
-  selectHeatStressWorkWarningSummaryByDate,
-  selectPressLinkByDate,
-  setDailySummaryFetchedHSWW,
-} from "@/lib/database";
 
 const app = new Hono<{ Bindings: Bindings }>();
 
@@ -151,8 +151,9 @@ app.post("/:yyyy/:mm/:dd", async (c) => {
 
   try {
     const date = validateDate(yyyy, mm, dd);
-    const pressLinks = await selectPressLinkByDate(c, date);
+    const pressLinks = await selectPressLinksByDate(c, date);
 
+    // check press links has fetched
     if (!pressLinks) {
       return failedResponse(c, `failed get press links for date ${date}`);
     }
@@ -165,20 +166,22 @@ app.post("/:yyyy/:mm/:dd", async (c) => {
       .filter((link) => link.title.toLowerCase().includes("heat stress"))
       .map((link) => link.url);
 
+    // no heat stress work warnings for that day
     if (heatStressWorkWarningUrls.length === 0) {
-      const today = dayjs().format("YYYY-MM-DD");
       // patch daily summaries
-      const result = await setDailySummaryFetchedHSWW(c, date)
-      
+      const result = await setDailySummaryFetchedHSWW(c, date);
+
       return successResponse(
         c,
-        `success fetch heat stress work summary for date ${date}`, result
+        `success fetch heat stress work summary for date ${date}`,
+        result
       );
     }
 
     const heatStressWorkWarningPromises = heatStressWorkWarningUrls.map((url) =>
       scrapeHeatStressWorkWarning(url)
     );
+
     const heatStressWorkWarnings = await Promise.all(
       heatStressWorkWarningPromises
     );
@@ -187,7 +190,8 @@ app.post("/:yyyy/:mm/:dd", async (c) => {
       insertHeatStressWorkWarning(c, hsww)
     );
 
-    await Promise.all(insertPromises);
+    const results = await Promise.all(insertPromises);
+    return successResponse(c, `success post hsww for date ${date}`, results);
     // create hsww summary
     const startHSWW = heatStressWorkWarnings.filter((hsww) => hsww.start_time);
     const endHSWW = heatStressWorkWarnings.filter(
@@ -291,6 +295,5 @@ app.get("/:yyyy/:mm/:dd/summary", async (c) => {
     );
   }
 });
-
 
 export default app;

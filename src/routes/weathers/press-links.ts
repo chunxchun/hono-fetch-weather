@@ -6,9 +6,12 @@ import { Hono } from "hono";
 import { v4 as uuidv4 } from "uuid";
 dayjs.extend(customParseFormat);
 
+import {
+  deletePressLinksByDate,
+  insertPressLink,
+} from "@/lib/drizzle/press-links";
 import { failedResponse, successResponse, validateDate } from "@/lib/helpers";
 import type { PressLink } from "@/types/weather";
-import { deletePressLinkByDate, insertPressLink } from "@/lib/database";
 
 const app = new Hono<{ Bindings: Bindings }>();
 
@@ -47,11 +50,11 @@ app.get("/:yyyy/:mm/:dd", async (c) => {
 const scrapePressLinks = async (url: string) => {
   const content = await fetch(url);
   console.log(url);
-  const year = url.slice(-13,-9)
-  const month = url.slice(-9, -7)
-  const day = url.slice(-6,-4)
-  const date = `${year}-${month}-${day}` 
-  
+  const year = url.slice(-13, -9);
+  const month = url.slice(-9, -7);
+  const day = url.slice(-6, -4);
+  const date = `${year}-${month}-${day}`;
+
   const html = await content.text();
   const $ = load(html);
   const pressLinkSelector =
@@ -100,7 +103,7 @@ app.delete(":yyyy/:mm/:dd", async (c) => {
 
   try {
     const date = validateDate(yyyy, mm, dd);
-    const results = await deletePressLinkByDate(c, date);
+    const results = await deletePressLinksByDate(c, date);
     return successResponse(
       c,
       `success delete press links for date ${date}`,
