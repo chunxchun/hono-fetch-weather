@@ -5,6 +5,8 @@ import {
 import {
   deleteDailyReportImageByUrl,
   insertDailyReportImage,
+  selectDailyReportImageById,
+  selectDailyReportImagesByDate,
   updateDailyReportImageById,
 } from "@/lib/drizzle/daily-reports";
 import {
@@ -30,13 +32,7 @@ app.get("/images/:yyyy/:mm/:dd", async (c) => {
   const { yyyy, mm, dd } = c.req.param();
   try {
     const date = validateDate(yyyy, mm, dd);
-    // fetch database
-    const db = drizzle(c.env.DB);
-    const results = await db
-      .select()
-      .from(dailyReportImagesTable)
-      .where(eq(dailyReportImagesTable.date, date));
-
+    const results = await selectDailyReportImagesByDate(c, date);
     return successResponse(
       c,
       `fetch d1 ${date} daily report images success`,
@@ -276,6 +272,21 @@ app.patch("/images/:id", async (c) => {
     );
   }
 });
+
+app.get("/images/:id", async (c) => {
+  const { id } = c.req.param();
+  try {
+    const results = await selectDailyReportImageById(c, id);
+    return successResponse(c, `success get daily report image ${id}`, results);
+  } catch (err) {
+    return failedResponse(
+      c,
+      `failed get daily report image ${id}`,
+      JSON.stringify(err)
+    );
+  }
+});
+
 // delete by key (i.e. r2 key)
 app.delete("/images/:key", async (c) => {
   const { key } = c.req.param();
