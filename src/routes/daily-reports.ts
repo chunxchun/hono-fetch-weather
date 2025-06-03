@@ -5,6 +5,7 @@ import {
 import {
   deleteDailyReportImageByUrl,
   insertDailyReportImage,
+  updateDailyReportImageById,
 } from "@/lib/drizzle/daily-reports";
 import {
   failedResponse,
@@ -18,7 +19,10 @@ import { drizzle } from "drizzle-orm/d1";
 import { Hono } from "hono";
 import { v4 as uuidv4 } from "uuid";
 import { Bindings } from "../config";
-import type { DailyReportImage } from "../types/dailyReport";
+import type {
+  DailyReportImage,
+  DailyReportImageUpdate,
+} from "../types/dailyReport";
 
 const app = new Hono<{ Bindings: Bindings }>();
 
@@ -215,6 +219,63 @@ app.on(
   }
 );
 
+app.patch("/images/:id", async (c) => {
+  const { id } = c.req.param();
+  const formData = await c.req.parseBody();
+
+  const imageDesc = formData["desc"]
+    ? validateFormDataString(formData["desc"])
+    : "";
+  const building = formData["building"]
+    ? validateFormDataString(formData["building"])
+    : "";
+  const level = formData["level"]
+    ? validateFormDataString(formData["level"])
+    : "";
+  const location = formData["location"]
+    ? validateFormDataString(formData["location"])
+    : "";
+  const substrate = formData["substrate"]
+    ? validateFormDataString(formData["substrate"])
+    : "";
+  const work = formData["work"] ? validateFormDataString(formData["work"]) : "";
+
+  const data: DailyReportImageUpdate = {};
+  // push non-empty fields to data
+  if (imageDesc) {
+    data.desc = imageDesc;
+  }
+  if (building) {
+    data.building = building;
+  }
+  if (level) {
+    data.level = level;
+  }
+  if (location) {
+    data.location = location;
+  }
+  if (substrate) {
+    data.substrate = substrate;
+  }
+  if (work) {
+    data.work = work;
+  }
+
+  try {
+    const results = await updateDailyReportImageById(c, id, data);
+    return successResponse(
+      c,
+      `success update daily report image ${id}`,
+      results
+    );
+  } catch (err) {
+    return failedResponse(
+      c,
+      `failed update daily report image ${id}`,
+      JSON.stringify(err)
+    );
+  }
+});
 // delete by key (i.e. r2 key)
 app.delete("/images/:key", async (c) => {
   const { key } = c.req.param();

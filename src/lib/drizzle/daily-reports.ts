@@ -6,7 +6,7 @@ import {
   dailyReportImagesTable,
   dailyReportsTable,
 } from "@/db/dailyReportSchema";
-import { DailyReport, DailyReportImage } from "@/types/dailyReport";
+import { DailyReport, DailyReportImage, DailyReportImageUpdate } from "@/types/dailyReport";
 import dayjs from "dayjs";
 
 export const insertDailyReport = async (
@@ -118,7 +118,7 @@ export const selectDailyReportImageByUrl = async (
 export const updateDailyReportImageById = async (
   c: Context<{ Bindings: Bindings }>,
   id: string,
-  dailyReportImage: DailyReportImage
+  dailyReportImage: DailyReportImageUpdate
 ) => {
   const db = drizzle(c.env.DB);
   const today = dayjs().format("YYYY-MM-DD");
