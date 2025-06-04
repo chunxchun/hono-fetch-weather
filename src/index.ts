@@ -11,7 +11,7 @@ import {
 } from "./config";
 
 // routes
-import dailyReportsRoute from "./routes/daily-reports";
+import dailyReportsRoute from "./routes/daily-reports/daily-reports";
 import imagesRoute from "./routes/images";
 import invoicesRoute from "./routes/invoices";
 import testsRoute from "./routes/tests";
