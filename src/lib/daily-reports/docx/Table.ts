@@ -1,6 +1,6 @@
 import { R2_URL } from "@/config";
 import { ImageRun, Paragraph, Table, TableCell, TableRow, TextRun } from "docx";
-import { DOCX_IMAGE_DATA, DOCX_MAN_POWER_DATA } from "../types/docx";
+import { DOCX_IMAGE_DATA, DOCX_MAN_POWER_DATA } from "@/types/docx";
 
 const MAX_DIMENSION = 300;
 const PHOTO_TABLE_ROW_HEIGHT = 5000;

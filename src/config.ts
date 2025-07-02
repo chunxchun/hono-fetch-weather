@@ -25,5 +25,5 @@ export const quotationAppDomain = `https://${quotationAppBaseUrl}.${workersBaseU
 
 // export const R2_URL = `https://pub-2b0addf01b884fb58892ece1dc10f22d.r2.dev`; // demo
 export const R2_URL = `https://pub-54da6c0345f1498280dc5c7230e65fdf.r2.dev` // tong-kee
-export const logoUrl = `https://pub-2b0addf01b884fb58892ece1dc10f22d.r2.dev/tong-kee-logo.png`;
-export const signatureUrl = `https://pub-2b0addf01b884fb58892ece1dc10f22d.r2.dev/ww-signature.jpg`;
+export const logoUrl = 'https://pub-54da6c0345f1498280dc5c7230e65fdf.r2.dev/tong-kee-logo.png'
+export const signatureUrl = 'https://pub-54da6c0345f1498280dc5c7230e65fdf.r2.dev/ww-signature.jpg'
