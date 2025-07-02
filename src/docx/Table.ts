@@ -83,6 +83,17 @@ const createPhotoTableRows = async (images: Array<DOCX_IMAGE_DATA>) => {
   return tableRows;
 };
 
+const createTableHeadCell = (text: string, widthDXA: number) => {
+  return new TableCell({
+    width: { size: widthDXA, type: "dxa" },
+    children: [
+      new Paragraph({
+        children: [createTextRun(text, true, 18), createTextRun("")],
+      }),
+    ],
+  });
+};
+
 const createTableCell = (text: string, widthDXA: number) => {
   return new TableCell({
     width: { size: widthDXA, type: "dxa" },
@@ -97,12 +108,12 @@ const createTableCell = (text: string, widthDXA: number) => {
 const createManPowerHeaderRow = () => {
   return new TableRow({
     children: [
-      createTableCell("S/N", 500),
-      createTableCell("Work Description", 4500),
-      createTableCell("Qty", 500),
-      createTableCell("MP", 500),
-      createTableCell("Location", 1500),
-      createTableCell("Remarks", 1500),
+      createTableHeadCell("S/N", 500),
+      createTableHeadCell("Work Description", 4500),
+      createTableHeadCell("Qty", 500),
+      createTableHeadCell("MP", 500),
+      createTableHeadCell("Location", 1500),
+      createTableHeadCell("Remarks", 1500),
     ],
   });
 };
@@ -123,20 +134,27 @@ const createManPowerRow = (idx: number, man_power: DOCX_MAN_POWER_DATA) => {
 export const createManPowerTable = async (
   man_powers: Array<DOCX_MAN_POWER_DATA>
 ) => {
-  const manPowerRows = man_powers.map((man_power, idx) =>
-    createManPowerRow(idx, man_power)
-  );
-  return new Table({
-    columnWidths: [500, 4500, 500, 500, 1500, 1500],
-    width: { size: 100, type: "pct" },
-    layout: "fixed",
-    rows: [createManPowerHeaderRow(), ...manPowerRows],
-  });
+  try {
+    const manPowerRows = man_powers.map((man_power, idx) =>
+      createManPowerRow(idx, man_power)
+    );
+    return new Table({
+      columnWidths: [500, 4500, 500, 500, 1500, 1500],
+      width: { size: 100, type: "pct" },
+      layout: "fixed",
+      rows: [createManPowerHeaderRow(), ...manPowerRows],
+    });
+  } catch (err) {
+    throw err;
+  }
 };
 
 export const createPhotoTable = async (images: Array<DOCX_IMAGE_DATA>) => {
   try {
     return new Table({
+      columnWidths: [4500, 4500],
+      width: { size: 100, type: "pct" },
+      layout: "fixed",
       rows: await createPhotoTableRows(images),
     });
   } catch (err) {

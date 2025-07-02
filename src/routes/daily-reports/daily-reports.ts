@@ -12,6 +12,7 @@ dayjs.extend(customParseFormat);
 
 import dailyReportsImagesRoute from "./images";
 import dailyReportsManPowersRoute from "./man-powers";
+
 import { createDailyReport } from "@/lib/daily-reports/docx/daily-reports";
 
 const app = new Hono<{ Bindings: Bindings }>();
@@ -31,7 +32,7 @@ app.get("/:yyyy/:mm/:dd", async (c) => {
   const date = validateDate(yyyy, mm, dd);
 
   try {
-    const object = await c.env.BUCKET.get(`daily-reports/${date}.docx`);
+    const object = await c.env.BUCKET.get(`docx/${date}.docx`);
     if (object === null) {
       return c.json({ success: false, message: `daily report not found` }, 404);
     }

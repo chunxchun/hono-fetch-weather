@@ -10,22 +10,18 @@ import {
   LOCAL_DOCX_DATA,
   POST_DOCX_DATA,
 } from "@/types/docx";
-import { Client, Location, Project } from "../dailyReportConstants";
+import { Client, Location, Project, Title } from "../dailyReportConstants";
 import { logoUrl, signatureUrl } from "@/config";
-// import Logo from "../assets/tong-kee-logo.png";
-// import Signature from "../assets/ww-signature.jpg";
+import { selectDailySummaryByDate } from "@/lib/drizzle/daily-summaries";
 
 export const createDailyReport = async (c: Context, date: string) => {
-  //   const db = drizzle(c.env);
   console.log("start create daily report");
   try {
     const logo = await fetch(logoUrl);
     const logoBuffer = await logo.arrayBuffer();
-    console.log("get logo buffer");
 
     const signature = await fetch(signatureUrl);
     const signatureBuffer = await signature.arrayBuffer();
-    console.log("get signature buffer");
 
     const images = await selectDailyReportImagesByDate(c, date);
     if (!images.length) {
@@ -37,7 +33,13 @@ export const createDailyReport = async (c: Context, date: string) => {
         id: image.id,
         num: (idx + 1).toString(),
         url: image.url,
-        desc: image.desc,
+        desc:
+          image.desc ||
+          image.building +
+            image.level +
+            image.location +
+            image.substrate +
+            image.work,
         width: image.width,
         height: image.height,
       };
@@ -53,11 +55,19 @@ export const createDailyReport = async (c: Context, date: string) => {
     console.log("man powers");
     console.log(manPowers);
 
+    const weather = await selectDailySummaryByDate(c, date);
+    if (!weather.length) {
+      return c.json(
+        { success: false, message: `no weather summary found` },
+        404
+      );
+    }
+
     const docData: POST_DOCX_DATA = {
-      title: "TITLE",
+      title: Title,
       client: Client,
       date: date,
-      weather: "00",
+      weather: `Temperature ${weather[0].min_temperature}-${weather[0].max_temperature}°C, Humidity ${weather[0].min_humidity}-${weather[0].max_humidity}%`,
       project: Project,
       location: Location,
       images: imageData,
@@ -70,21 +80,8 @@ export const createDailyReport = async (c: Context, date: string) => {
     };
 
     const docxData: DOCX_DATA = { ...docData, ...localData };
-
     const report = await generateDocx(c, docxData);
-
     return report;
-    // return c.json(
-    //   {
-    //     success: true,
-    //     message: `success create daily report`,
-    //     result: result,
-    //   },
-    //   200
-    // );
-    // generateDocx()
-
-    //   const dailyReport = await insertDailyReport(c, date);
   } catch (err) {
     throw err;
   }

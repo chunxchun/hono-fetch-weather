@@ -1,5 +1,45 @@
 import { AlignmentType, Header, ImageRun, Paragraph, TextRun } from "docx";
 
+const createHeaderLogo = (logo: ArrayBuffer) =>
+  new Paragraph({
+    alignment: "center",
+    children: [
+      new ImageRun({
+        data: logo,
+        type: "png",
+        transformation: { width: 500, height: 100 },
+      }),
+    ],
+  });
+
+const createHeaderDate = (date: string) =>
+  new Paragraph({
+    alignment: "right",
+    children: [
+      new TextRun({
+        size: 20,
+        text: `Date: ${date}`,
+      }),
+    ],
+  });
+
+const createHeaderWeather = (weather: string) =>
+  new Paragraph({
+    alignment: "right",
+    children: [
+      new TextRun({
+        size: 20,
+        text: `Weather: ${weather}`,
+      }),
+    ],
+  });
+
+const createHeaderBottomPadding = () =>
+  new Paragraph({
+    alignment: "right",
+    children: [],
+  });
+
 export const createHeader = (
   logo: ArrayBuffer,
   date: string,
@@ -7,41 +47,10 @@ export const createHeader = (
 ) => {
   return new Header({
     children: [
-      // logo
-      new Paragraph({
-        alignment: AlignmentType.CENTER,
-        children: [
-          new ImageRun({
-            data: logo,
-            type: "png",
-            transformation: { width: 500, height: 100 },
-          }),
-        ],
-      }),
-      // date
-      new Paragraph({
-        alignment: AlignmentType.RIGHT,
-        children: [
-          new TextRun({
-            size: 20,
-            text: `Date: ${date}`,
-          }),
-        ],
-      }),
-      // weather
-      new Paragraph({
-        alignment: AlignmentType.RIGHT,
-        children: [
-          new TextRun({
-            size: 20,
-            text: `Weather: ${weather}`,
-          }),
-        ],
-      }),
-      new Paragraph({
-        alignment: AlignmentType.RIGHT,
-        children: [],
-      }),
+      createHeaderLogo(logo),
+      createHeaderDate(date),
+      createHeaderWeather(weather),
+      createHeaderBottomPadding(),
     ],
   });
 };
