@@ -1,7 +1,7 @@
 import dayjs from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat";
 import { Hono } from "hono";
-import { Bindings } from "../../config";
+import { Bindings, R2_URL } from "../../config";
 import { failedResponse, successResponse, validateDate } from "@/lib/helpers";
 import {
   DAILY_REPORTS_IMAGES_ROUTE_PATH,
@@ -36,12 +36,21 @@ app.get("/:yyyy/:mm/:dd", async (c) => {
     if (object === null) {
       return c.json({ success: false, message: `daily report not found` }, 404);
     }
-    const headers = new Headers();
-    object.writeHttpMetadata(headers);
-    headers.set("etag", object.httpEtag);
-    return new Response(object.body, {
-      headers,
-    });
+
+    return c.json(
+      {
+        success: true,
+        message: `daily report for ${date} found`,
+        results: [{ url: `${R2_URL}/docx/${date}.docx` }],
+      },
+      200
+    );
+    // const headers = new Headers();
+    // object.writeHttpMetadata(headers);
+    // headers.set("etag", object.httpEtag);
+    // return new Response(object.body, {
+    //   headers,
+    // });
   } catch (err) {
     return failedResponse(
       c,
