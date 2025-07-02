@@ -26,7 +26,7 @@ app.post("/:yyyy/:mm/:dd", async (c) => {
       date,
       work_desc: data.work_desc,
       quantity: parseInt(data.quantity),
-      man_count: parseInt(data.quantity),
+      man_count: parseInt(data.man_count),
       location: data.location,
       remarks: data.remarks,
       created_at: today,
