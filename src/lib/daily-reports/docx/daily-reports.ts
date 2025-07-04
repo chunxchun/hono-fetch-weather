@@ -36,7 +36,7 @@ export const createDailyReport = async (c: Context, date: string) => {
         desc:
           image.desc ||
           image.building +
-            image.level +
+            image.level + " " +
             image.location +
             image.substrate +
             image.work,
