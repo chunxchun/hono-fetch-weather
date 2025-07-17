@@ -170,8 +170,8 @@ app.post("/:yyyy/:mm/:dd", async (c) => {
     // no heat stress work warnings for that day
     if (heatStressWorkWarningUrls.length === 0) {
       // patch daily summaries
-      const result = await setDailySummaryFetchedHSWW(c, date);
-
+      await setDailySummaryFetchedHSWW(c, date);
+      const result = { fetched: true, hsww: [] }
       return successResponse(
         c,
         `success fetch heat stress work summary for date ${date}`,
@@ -191,49 +191,52 @@ app.post("/:yyyy/:mm/:dd", async (c) => {
       insertHeatStressWorkWarning(c, hsww)
     );
 
-    const result = await setDailySummaryFetchedHSWW(c, date); 
-    const results = await Promise.all(insertPromises);
+    await setDailySummaryFetchedHSWW(c, date);
+    const insertResults = await Promise.all(insertPromises);
+    const results = { fetched: true, hsww: insertResults };
+
     return successResponse(c, `success post hsww for date ${date}`, results);
+    
     // create hsww summary
-    const startHSWW = heatStressWorkWarnings.filter((hsww) => hsww.start_time);
-    const endHSWW = heatStressWorkWarnings.filter(
-      (hsww) => hsww.cancelled_time
-    );
+    // const startHSWW = heatStressWorkWarnings.filter((hsww) => hsww.start_time);
+    // const endHSWW = heatStressWorkWarnings.filter(
+    //   (hsww) => hsww.cancelled_time
+    // );
 
-    if (startHSWW.length !== endHSWW.length) {
-      return failedResponse(c, `heat stress work warnings not complete`);
-    }
+    // if (startHSWW.length !== endHSWW.length) {
+    //   return failedResponse(c, `heat stress work warnings not complete`);
+    // }
 
-    const hsww = [];
-    for (let i = 0; i < startHSWW.length; i++) {
-      const completeHSWW = {
-        level: startHSWW[i].level,
-        start_time: startHSWW[i].start_time,
-        cancelled_time: endHSWW[i].cancelled_time,
-      };
-      hsww.push(completeHSWW);
-    }
+    // const hsww = [];
+    // for (let i = 0; i < startHSWW.length; i++) {
+    //   const completeHSWW = {
+    //     level: startHSWW[i].level,
+    //     start_time: startHSWW[i].start_time,
+    //     cancelled_time: endHSWW[i].cancelled_time,
+    //   };
+    //   hsww.push(completeHSWW);
+    // }
 
-    const id = uuidv4();
-    const today = dayjs().format("yyyy-mm-dd");
-    const HSWWSummary: HeatStressWorkWarningSummary = {
-      id,
-      report_date: date,
-      fetched: true,
-      heat_stress_work_warnings: JSON.stringify(hsww),
-      created_at: today,
-      updated_at: today,
-    };
-    const insertSummaryPromise = await insertHeatStressWorkWarningSummary(
-      c,
-      HSWWSummary
-    );
+    // const id = uuidv4();
+    // const today = dayjs().format("yyyy-mm-dd");
+    // const HSWWSummary: HeatStressWorkWarningSummary = {
+    //   id,
+    //   report_date: date,
+    //   fetched: true,
+    //   heat_stress_work_warnings: JSON.stringify(hsww),
+    //   created_at: today,
+    //   updated_at: today,
+    // };
+    // const insertSummaryPromise = await insertHeatStressWorkWarningSummary(
+    //   c,
+    //   HSWWSummary
+    // );
 
-    return successResponse(
-      c,
-      `success insert heat stress work warning summaries for date ${date}`,
-      HSWWSummary
-    );
+    // return successResponse(
+    //   c,
+    //   `success insert heat stress work warning summaries for date ${date}`,
+    //   HSWWSummary
+    // );
   } catch (err) {
     return failedResponse(
       c,
